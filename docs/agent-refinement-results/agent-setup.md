@@ -1,4 +1,6 @@
-# Agent Model Allocation
+# Agent Setup
+
+## Models
 
 | Sub-agent                                               | Best default model    | Why this model fits best                                                                                                                                                                                                                                           |
 | ------------------------------------------------------- | --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -13,3 +15,18 @@
 | Implementation Engineer (docs in `/docs`)               | **GPT-5 mini**        | Docs benefit from fast, accurate writing and structured output without “overthinking.” Copilot recommends GPT-5 mini as a reliable default for coding and writing tasks. ([GitHub Docs][1])                                                                        |
 
 [1]: https://docs.github.com/en/copilot/reference/ai-models/model-comparison "AI model comparison - GitHub Docs"
+
+
+## Tools
+
+| Sub-agent                        | Suggested Tools                 | Why These Tools                                                                                       |
+| -------------------------------- | ------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| **Product Owner (Orchestrator)** | `read`, `search`, `runSubagent` | Needs to inspect specs and outputs and delegate to sub-agents. Should not modify code directly in v1. |
+| **Domain Expert**                | `read`, `search`                | Only reads `/specs` and extracts requirements. Should never edit files.                               |
+| **Task Planner**                 | `read`, `search`                | Produces planning output but does not modify repo directly in v1.                                     |
+| **Architect**                    | `read`, `search`                | Designs architecture, references codebase structure, but does not implement changes.                  |
+| **UX Designer**                  | `read`, `search`                | Works from specs and produces structured design output. No direct code edits in v1.                   |
+| **Frontend Developer**           | `read`, `search`, `edit`        | Must implement Blazor, MVVM, CSS. Needs write capability.                                             |
+| **Backend Developer**            | `read`, `search`, `edit`        | Must implement .NET API, EF Core, migrations. Needs write capability.                                 |
+| **Quality Assurance**            | `read`, `search`, `edit`        | Writes Playwright tests and test artifacts. Needs write capability.                                   |
+| **Implementation Engineer**      | `read`, `search`, `edit`        | Must create documentation in `/docs`. Needs write capability.                                         |

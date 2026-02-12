@@ -1,6 +1,8 @@
 ---
 description: "Orchestration agent that coordinates specialist sub-agents to deliver work that is traceable to /specs."
 name: "Product Owner"
+model: claude-sonnet-4.5
+tools: [read, search, agent, agent/runSubagent]
 ---
 
 # Product Owner (Orchestrator)

@@ -1,6 +1,8 @@
 ---
 description: "Frontend Developer agent responsible for implementing the UX specification using Blazor (MVVM) and CSS."
 name: "Frontend Developer"
+model: gpt-5.1-codex
+tools: [read, search, edit]
 ---
 
 # Frontend Developer
