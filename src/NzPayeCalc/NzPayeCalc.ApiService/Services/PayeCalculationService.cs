@@ -1,25 +1,34 @@
 namespace NzPayeCalc.ApiService.Services;
 
 /// <summary>
-/// Implementation of PAYE calculation service using 2024/2025 NZ tax rates
+/// Implementation of PAYE calculation service using 2025/2026 NZ tax rates
 /// </summary>
 public class PayeCalculationService : IPayeCalculationService
 {
     private readonly ILogger<PayeCalculationService> _logger;
 
-    // Tax brackets for 2024/2025 tax year
+    // Tax brackets for 2025/2026 tax year
+    // Previous 2024/2025 rates (for reference):
+    //   (0m, 14000m, 0.105m)    - $0 - $14,000 @ 10.5%
+    //   (14000m, 48000m, 0.175m) - $14,001 - $48,000 @ 17.5%
+    //   (48000m, 70000m, 0.30m)  - $48,001 - $70,000 @ 30%
+   //   (70000m, 180000m, 0.33m) - $70,001 - $180,000 @ 33%
+    //   (180000m, decimal.MaxValue, 0.39m) - Over $180,000 @ 39%
     private static readonly (decimal Lower, decimal Upper, decimal Rate)[] TaxBrackets =
     [
-        (0m, 14000m, 0.105m),           // $0 - $14,000 @ 10.5%
-        (14000m, 48000m, 0.175m),       // $14,001 - $48,000 @ 17.5%
-        (48000m, 70000m, 0.30m),        // $48,001 - $70,000 @ 30%
-        (70000m, 180000m, 0.33m),       // $70,001 - $180,000 @ 33%
+        (0m, 15600m, 0.105m),           // $0 - $15,600 @ 10.5%
+        (15600m, 53500m, 0.175m),       // $15,601 - $53,500 @ 17.5%
+        (53500m, 78100m, 0.30m),        // $53,501 - $78,100 @ 30%
+        (78100m, 180000m, 0.33m),       // $78,101 - $180,000 @ 33%
         (180000m, decimal.MaxValue, 0.39m)  // Over $180,000 @ 39%
     ];
 
-    private const decimal KiwiSaverRate = 0.03m;  // 3% employee contribution
     private const decimal AccRate = 0.0153m;      // 1.53% ACC Earners' Levy
     private const decimal AccMaxEarnings = 139384m; // ACC maximum earnings threshold
+    
+    // Student loan repayment constants (2025/2026)
+    private const decimal StudentLoanThreshold = 24128m; // Repayment threshold
+    private const decimal StudentLoanRate = 0.12m;       // 12% repayment rate above threshold
 
     public PayeCalculationService(ILogger<PayeCalculationService> logger)
     {
@@ -27,30 +36,36 @@ public class PayeCalculationService : IPayeCalculationService
     }
 
     /// <inheritdoc />
-    public PayeCalculationResult Calculate(decimal annualSalary)
+    public PayeCalculationResult Calculate(decimal annualSalary, decimal kiwiSaverRate, bool hasStudentLoan)
     {
-        _logger.LogInformation("Calculating PAYE for annual salary: {AnnualSalary:C}", annualSalary);
+        _logger.LogInformation("Calculating PAYE for annual salary: {AnnualSalary:C}, KiwiSaver rate: {Rate:P1}, Has student loan: {HasLoan}", 
+            annualSalary, kiwiSaverRate, hasStudentLoan);
 
         try
         {
             var payeTax = CalculateProgressiveTax(annualSalary);
-            var kiwiSaver = CalculateKiwiSaver(annualSalary);
+            var kiwiSaver = CalculateKiwiSaver(annualSalary, kiwiSaverRate);
             var accLevy = CalculateAccLevy(annualSalary);
+            var studentLoan = CalculateStudentLoan(annualSalary, hasStudentLoan);
 
             var result = new PayeCalculationResult
             {
                 AnnualSalary = annualSalary,
+                KiwiSaverRate = kiwiSaverRate,
+                HasStudentLoan = hasStudentLoan,
                 AnnualPayeTax = RoundCurrency(payeTax),
                 AnnualKiwiSaver = RoundCurrency(kiwiSaver),
-                AnnualAccLevy = RoundCurrency(accLevy)
+                AnnualAccLevy = RoundCurrency(accLevy),
+                AnnualStudentLoan = RoundCurrency(studentLoan)
             };
 
             _logger.LogDebug(
-                "PAYE calculation completed. Salary: {Salary:C}, Tax: {Tax:C}, KiwiSaver: {KS:C}, ACC: {ACC:C}, TakeHome: {TH:C}",
+                "PAYE calculation completed. Salary: {Salary:C}, Tax: {Tax:C}, KiwiSaver: {KS:C}, ACC: {ACC:C}, StudentLoan: {SL:C}, TakeHome: {TH:C}",
                 result.AnnualSalary,
                 result.AnnualPayeTax,
                 result.AnnualKiwiSaver,
                 result.AnnualAccLevy,
+                result.AnnualStudentLoan,
                 result.AnnualTakeHome);
 
             return result;
@@ -90,11 +105,11 @@ public class PayeCalculationService : IPayeCalculationService
     }
 
     /// <summary>
-    /// Calculate KiwiSaver employee contribution (3% of gross salary)
+    /// Calculate KiwiSaver employee contribution (variable rate of gross salary)
     /// </summary>
-    private decimal CalculateKiwiSaver(decimal annualSalary)
+    private decimal CalculateKiwiSaver(decimal annualSalary, decimal kiwiSaverRate)
     {
-        return annualSalary * KiwiSaverRate;
+        return annualSalary * kiwiSaverRate;
     }
 
     /// <summary>
@@ -104,6 +119,24 @@ public class PayeCalculationService : IPayeCalculationService
     {
         var cappedSalary = Math.Min(annualSalary, AccMaxEarnings);
         return cappedSalary * AccRate;
+    }
+
+    /// <summary>
+    /// Calculate student loan repayment (12% of income above threshold, if applicable)
+    /// </summary>
+    /// <param name="annualSalary">Annual gross salary</param>
+    /// <param name="hasStudentLoan">Whether the person has a student loan</param>
+    /// <returns>Annual student loan repayment amount</returns>
+    private decimal CalculateStudentLoan(decimal annualSalary, bool hasStudentLoan)
+    {
+        if (!hasStudentLoan)
+            return 0m;
+
+        if (annualSalary <= StudentLoanThreshold)
+            return 0m;
+
+        var repayableIncome = annualSalary - StudentLoanThreshold;
+        return repayableIncome * StudentLoanRate;
     }
 
     /// <summary>

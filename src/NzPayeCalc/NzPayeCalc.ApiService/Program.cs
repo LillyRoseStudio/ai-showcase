@@ -31,17 +31,20 @@ app.MapGet("/", () => "NZ PAYE Calculator API - Navigate to /api/paye/calculate 
 // PAYE calculation endpoint
 app.MapPost("/api/paye/calculate", (PayeCalculationRequest request, IPayeCalculationService calculationService) =>
 {
-    var result = calculationService.Calculate(request.AnnualSalary);
+    var result = calculationService.Calculate(request.AnnualSalary, request.KiwiSaverRate, request.HasStudentLoan);
 
     var response = new PayeCalculationResponse
     {
         AnnualSalary = result.AnnualSalary,
+        KiwiSaverRate = result.KiwiSaverRate,
+        HasStudentLoan = result.HasStudentLoan,
         Annual = new AnnualBreakdown
         {
             GrossSalary = result.AnnualSalary,
             PayeTax = result.AnnualPayeTax,
             KiwiSaver = result.AnnualKiwiSaver,
             AccLevy = result.AnnualAccLevy,
+            StudentLoan = result.AnnualStudentLoan,
             TakeHomePay = result.AnnualTakeHome
         },
         Monthly = new MonthlyBreakdown
@@ -50,6 +53,7 @@ app.MapPost("/api/paye/calculate", (PayeCalculationRequest request, IPayeCalcula
             PayeTax = result.MonthlyPayeTax,
             KiwiSaver = result.MonthlyKiwiSaver,
             AccLevy = result.MonthlyAccLevy,
+            StudentLoan = result.MonthlyStudentLoan,
             TakeHomePay = result.MonthlyTakeHome
         }
     };

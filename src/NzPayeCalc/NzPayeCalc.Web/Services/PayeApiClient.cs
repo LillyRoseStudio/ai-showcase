@@ -21,17 +21,27 @@ public class PayeApiClient
     /// Calculate PAYE and deductions for the given annual salary
     /// </summary>
     /// <param name="annualSalary">Annual gross salary in NZD</param>
+    /// <param name="kiwiSaverRate">KiwiSaver contribution rate (e.g., 0.03 for 3%)</param>
+    /// <param name="hasStudentLoan">Whether the person has a student loan</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Calculation results with annual and monthly breakdowns</returns>
     public async Task<PayeCalculationResponse?> CalculateAsync(
         decimal annualSalary,
+        decimal kiwiSaverRate,
+        bool hasStudentLoan,
         CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInformation("Calculating PAYE for salary: {Salary:C}", annualSalary);
+            _logger.LogInformation("Calculating PAYE for salary: {Salary:C}, KiwiSaver: {Rate:P1}, StudentLoan: {HasLoan}", 
+                annualSalary, kiwiSaverRate, hasStudentLoan);
 
-            var request = new PayeCalculationRequest { AnnualSalary = annualSalary };
+            var request = new PayeCalculationRequest 
+            { 
+                AnnualSalary = annualSalary,
+                KiwiSaverRate = kiwiSaverRate,
+                HasStudentLoan = hasStudentLoan
+            };
 
             var response = await _httpClient.PostAsJsonAsync(
                 "/api/paye/calculate",

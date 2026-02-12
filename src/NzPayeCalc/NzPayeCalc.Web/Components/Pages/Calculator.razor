@@ -37,7 +37,42 @@
                 </small>
             </div>
 
-            <button type="submit" class="btn btn-primary" disabled="@isLoading">
+            <div class="form-group mt-3">
+                <label for="kiwisaver-rate" class="form-label">
+                    KiwiSaver Contribution Rate
+                </label>
+                <InputSelect 
+                    id="kiwisaver-rate"
+                    @bind-Value="salaryInput.KiwiSaverRate"
+                    class="form-control"
+                    aria-describedby="kiwisaver-help">
+                    <option value="0.03">3%</option>
+                    <option value="0.04">4%</option>
+                    <option value="0.06">6%</option>
+                    <option value="0.08">8%</option>
+                    <option value="0.10">10%</option>
+                </InputSelect>
+                <small id="kiwisaver-help" class="form-text">
+                    Select your KiwiSaver employee contribution rate
+                </small>
+            </div>
+
+            <div class="form-group mt-3">
+                <div class="form-check">
+                    <InputCheckbox 
+                        id="has-student-loan"
+                        @bind-Value="salaryInput.HasStudentLoan"
+                        class="form-check-input" />
+                    <label for="has-student-loan" class="form-check-label">
+                        Do you have a student loan?
+                    </label>
+                </div>
+                <small class="form-text">
+                    Student loan repayments apply if your income exceeds the repayment threshold
+                </small>
+            </div>
+
+            <button type="submit" class="btn btn-primary mt-3" disabled="@isLoading">
                 @if (isLoading)
                 {
                     <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
@@ -75,13 +110,20 @@
                         <dd>-@results.Monthly.PayeTax.ToString("C2")</dd>
                     </div>
                     <div class="result-row deduction">
-                        <dt>KiwiSaver (3%)</dt>
+                        <dt>KiwiSaver (@((results.KiwiSaverRate * 100).ToString("0"))%)</dt>
                         <dd>-@results.Monthly.KiwiSaver.ToString("C2")</dd>
                     </div>
                     <div class="result-row deduction">
                         <dt>ACC Levy (1.53%)</dt>
                         <dd>-@results.Monthly.AccLevy.ToString("C2")</dd>
                     </div>
+                    @if (results.HasStudentLoan)
+                    {
+                        <div class="result-row deduction">
+                            <dt>Student Loan (12%)</dt>
+                            <dd>-@results.Monthly.StudentLoan.ToString("C2")</dd>
+                        </div>
+                    }
                     <div class="result-row take-home">
                         <dt>Take-Home Pay</dt>
                         <dd>@results.Monthly.TakeHomePay.ToString("C2")</dd>
@@ -100,13 +142,20 @@
                             <dd>-@results.Annual.PayeTax.ToString("C2")</dd>
                         </div>
                         <div class="result-row deduction">
-                            <dt>KiwiSaver (3%)</dt>
+                            <dt>KiwiSaver (@((results.KiwiSaverRate * 100).ToString("0"))%)</dt>
                             <dd>-@results.Annual.KiwiSaver.ToString("C2")</dd>
                         </div>
                         <div class="result-row deduction">
                             <dt>ACC Levy (1.53%)</dt>
                             <dd>-@results.Annual.AccLevy.ToString("C2")</dd>
                         </div>
+                        @if (results.HasStudentLoan)
+                        {
+                            <div class="result-row deduction">
+                                <dt>Student Loan (12%)</dt>
+                                <dd>-@results.Annual.StudentLoan.ToString("C2")</dd>
+                            </div>
+                        }
                         <div class="result-row take-home">
                             <dt>Take-Home Pay</dt>
                             <dd>@results.Annual.TakeHomePay.ToString("C2")</dd>
@@ -117,8 +166,8 @@
 
             <div class="calculation-notes mt-3">
                 <p class="text-muted small">
-                    <strong>Note:</strong> This calculation uses 2024/2025 NZ tax rates. 
-                    This is an estimate and does not include other deductions such as student loans or additional voluntary contributions.
+                    <strong>Note:</strong> This calculation uses 2025/2026 NZ tax rates (2024/2025 also available). 
+                    This is an estimate and does not include other deductions such as union fees, insurance, or special tax codes.
                 </p>
             </div>
         </section>
@@ -136,6 +185,11 @@
         [Required(ErrorMessage = "Annual salary is required")]
         [Range(1, 1000000, ErrorMessage = "Salary must be between $1 and $1,000,000")]
         public decimal AnnualSalary { get; set; } = 60000; // Default example value
+
+        [Required(ErrorMessage = "KiwiSaver rate is required")]
+        public decimal KiwiSaverRate { get; set; } = 0.03m; // Default 3%
+
+        public bool HasStudentLoan { get; set; } = false;
     }
 
     private async Task HandleCalculate()
@@ -146,7 +200,10 @@
 
         try
         {
-            results = await ApiClient.CalculateAsync(salaryInput.AnnualSalary);
+            results = await ApiClient.CalculateAsync(
+                salaryInput.AnnualSalary,
+                salaryInput.KiwiSaverRate,
+                salaryInput.HasStudentLoan);
         }
         catch (ApplicationException ex)
         {

@@ -11,6 +11,16 @@ public class PayeCalculationResponse
     public decimal AnnualSalary { get; set; }
 
     /// <summary>
+    /// KiwiSaver employee contribution rate used in calculation
+    /// </summary>
+    public decimal KiwiSaverRate { get; set; }
+
+    /// <summary>
+    /// Indicates whether student loan repayment was calculated
+    /// </summary>
+    public bool HasStudentLoan { get; set; }
+
+    /// <summary>
     /// Annual breakdown of all deductions and take-home pay
     /// </summary>
     public required AnnualBreakdown Annual { get; set; }
@@ -37,7 +47,7 @@ public class AnnualBreakdown
     public decimal PayeTax { get; set; }
 
     /// <summary>
-    /// Annual KiwiSaver employee contribution (3% of gross)
+    /// Annual KiwiSaver employee contribution (variable rate of gross)
     /// </summary>
     public decimal KiwiSaver { get; set; }
 
@@ -45,6 +55,11 @@ public class AnnualBreakdown
     /// Annual ACC Earners' Levy (1.53% of gross, capped at $139,384)
     /// </summary>
     public decimal AccLevy { get; set; }
+
+    /// <summary>
+    /// Annual student loan repayment (12% above threshold, if applicable)
+    /// </summary>
+    public decimal StudentLoan { get; set; }
 
     /// <summary>
     /// Annual take-home pay after all deductions
@@ -76,6 +91,11 @@ public class MonthlyBreakdown
     /// Monthly ACC Earners' Levy (annual / 12)
     /// </summary>
     public decimal AccLevy { get; set; }
+
+    /// <summary>
+    /// Monthly student loan repayment (annual / 12)
+    /// </summary>
+    public decimal StudentLoan { get; set; }
 
     /// <summary>
     /// Monthly take-home pay after all deductions (annual / 12)

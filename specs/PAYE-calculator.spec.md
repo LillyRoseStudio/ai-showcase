@@ -1,11 +1,11 @@
 ## PAYE Calculator Specification
 
-**Version**: 2.0  
-**Tax Year**: 2024/2025  
+**Version**: 3.0  
+**Tax Year**: 2025/2026 (with 2024/2025 support)  
 **Last Updated**: February 13, 2026
 
 ### Overview
-A web-based calculator that computes New Zealand PAYE (Pay As You Earn) tax, KiwiSaver contributions, and ACC levy based on annual salary input. The calculator displays both monthly and annual breakdowns of gross salary, deductions, and take-home pay.
+A web-based calculator that computes New Zealand PAYE (Pay As You Earn) tax, KiwiSaver contributions, ACC levy, and optional student loan repayments based on annual salary input. The calculator supports configurable KiwiSaver contribution rates and displays both monthly and annual breakdowns of gross salary, deductions, and take-home pay.
 
 ### Glossary
 - **PAYE**: Pay As You Earn - New Zealand's income tax system for employees
@@ -14,6 +14,8 @@ A web-based calculator that computes New Zealand PAYE (Pay As You Earn) tax, Kiw
 - **Progressive Tax**: Tax system where income is taxed across multiple brackets at different rates
 - **Take-Home Pay**: Net salary after all deductions (also called "net pay")
 - **Gross Salary**: Total salary before any deductions
+- **Student Loan Repayment**: Compulsory deduction when income exceeds repayment threshold
+- **Repayment Threshold**: Minimum annual income before student loan repayments begin
 
 ---
 
@@ -46,20 +48,52 @@ A web-based calculator that computes New Zealand PAYE (Pay As You Earn) tax, Kiw
 
 **Rationale**: Client-side validation provides immediate feedback; server-side validation ensures security and data integrity.
 
+### 1.3 KiwiSaver Rate Selection
+
+- **Label**: "KiwiSaver Contribution Rate"
+- **Type**: Dropdown/Select
+- **Options**: 3%, 4%, 6%, 8%, 10%
+- **Default Value**: 3%
+- **Help Text**: "Select your KiwiSaver employee contribution rate"
+- **Required**: Yes (with default pre-selected)
+
+**Rationale**: While 3% is the minimum employee contribution rate, employees can opt for higher voluntary contributions. Common rates are provided as standard options.
+
+**Allowed Values**:
+- 3% - Minimum employee contribution rate (default)
+- 4% - Optional higher contribution
+- 6% - Optional higher contribution
+- 8% - Optional higher contribution
+- 10% - Optional higher contribution
+
+### 1.4 Student Loan Repayment
+
+- **Label**: "Do you have a student loan?"
+- **Type**: Checkbox or Toggle
+- **Default Value**: Unchecked (false)
+- **Help Text**: "Student loan repayments apply if your income exceeds the repayment threshold"
+
+**Behavior**:
+- When unchecked: No student loan repayment calculated
+- When checked: Student loan repayment calculated based on income and threshold
+- State persists during calculation updates
+
+**Rationale**: Student loan repayment is compulsory for borrowers whose income exceeds the repayment threshold. Making this optional allows the calculator to serve both borrowers and non-borrowers.
+
 ---
 
 ## 2. Tax Calculations
 
-### 2.1 PAYE Tax Rates (2024/2025)
+### 2.1 PAYE Tax Rates (2025/2026)
 
 New Zealand uses a progressive tax system with five tax brackets:
 
 | Annual Income Range | Tax Rate | Calculation |
 |---------------------|----------|-------------|
-| $0 - $14,000 | 10.5% | Income in bracket × 0.105 |
-| $14,001 - $48,000 | 17.5% | Income in bracket × 0.175 |
-| $48,001 - $70,000 | 30% | Income in bracket × 0.30 |
-| $70,001 - $180,000 | 33% | Income in bracket × 0.33 |
+| $0 - $15,600 | 10.5% | Income in bracket × 0.105 |
+| $15,601 - $53,500 | 17.5% | Income in bracket × 0.175 |
+| $53,501 - $78,100 | 30% | Income in bracket × 0.30 |
+| $78,101 - $180,000 | 33% | Income in bracket × 0.33 |
 | Over $180,000 | 39% | Income in bracket × 0.39 |
 
 **Progressive Calculation Method**:
@@ -68,19 +102,25 @@ New Zealand uses a progressive tax system with five tax brackets:
 3. Continue through all applicable brackets
 4. Sum total tax across all brackets
 
-**Example**: For $60,000 annual salary:
-- Bracket 1: $14,000 × 10.5% = $1,470.00
-- Bracket 2: $34,000 × 17.5% = $5,950.00 (from $14,001 to $48,000)
-- Bracket 3: $12,000 × 30% = $3,600.00 (from $48,001 to $60,000)
-- **Total annual PAYE**: $11,020.00
+**Example**: For $60,000 annual salary (2025/2026):
+- Bracket 1: $15,600 × 10.5% = $1,638.00
+- Bracket 2: $37,900 × 17.5% = $6,632.50 (from $15,601 to $53,500)
+- Bracket 3: $6,500 × 30% = $1,950.00 (from $53,501 to $60,000)
+- **Total annual PAYE**: $10,220.50
+
+**Note**: For 2024/2025 tax brackets, see §2.5 (Tax Year Comparison).
 
 ### 2.2 KiwiSaver Contribution
-- **Rate**: 3% of gross salary
-- **Calculation**: Annual Salary × 0.03
+- **Rate**: Variable (3%, 4%, 6%, 8%, or 10% of gross salary)
+- **Default Rate**: 3%
+- **Calculation**: Annual Salary × Selected Rate
 - **Cap**: None (applies to full gross salary)
-- **Mandatory**: No, but calculator assumes 3% employee contribution
+- **Mandatory**: No, but calculator assumes participation at selected rate
 
-**Example**: $60,000 × 3% = $1,800.00 annual KiwiSaver
+**Examples**:
+- $60,000 @ 3%: $60,000 × 0.03 = $1,800.00 annual KiwiSaver
+- $60,000 @ 6%: $60,000 × 0.06 = $3,600.00 annual KiwiSaver
+- $60,000 @ 10%: $60,000 × 0.10 = $6,000.00 annual KiwiSaver
 
 ### 2.3 ACC Earners' Levy
 - **Rate**: 1.53% of gross salary
@@ -92,18 +132,95 @@ New Zealand uses a progressive tax system with five tax brackets:
 - $60,000: $60,000 × 1.53% = $918.00 (below cap)
 - $200,000: $139,384 × 1.53% = $2,132.57 (capped at threshold)
 
+### 2.4 Student Loan Repayment
+
+**Applicability**: Only if user has indicated they have a student loan
+
+**Repayment Threshold (2025/2026)**: $24,128 annual income
+**Repayment Rate**: 12% of income above threshold
+
+**Calculation**:
+```
+IF Annual Salary > Repayment Threshold THEN
+  Student Loan Repayment = (Annual Salary - Repayment Threshold) × 0.12
+ELSE
+  Student Loan Repayment = $0.00
+END IF
+```
+
+**Examples**:
+- $20,000 (below threshold): $0.00 (no repayment required)
+- $24,128 (at threshold): $0.00 (repayment starts above threshold)
+- $60,000: ($60,000 - $24,128) × 12% = $4,304.64 annual repayment
+- $200,000: ($200,000 - $24,128) × 12% = $21,104.64 annual repayment
+
+**Notes**:
+- Repayment is calculated on gross income
+- No maximum repayment amount (12% applied to all income above threshold)
+- Threshold is reviewed annually and may change
+
+**2024/2025 Tax Year Values** (for reference):
+- Repayment Threshold: $24,128
+- Repayment Rate: 12%
+
+### 2.5 Tax Year Comparison
+
+The calculator supports both 2024/2025 and 2025/2026 tax years. Below is a comparison of rates and thresholds.
+
+#### PAYE Tax Brackets
+
+**2025/2026 Tax Year** (Current):
+
+| Annual Income Range | Tax Rate |
+|---------------------|----------|
+| $0 - $15,600 | 10.5% |
+| $15,601 - $53,500 | 17.5% |
+| $53,501 - $78,100 | 30% |
+| $78,101 - $180,000 | 33% |
+| Over $180,000 | 39% |
+
+**2024/2025 Tax Year** (Previous):
+
+| Annual Income Range | Tax Rate |
+|---------------------|----------|
+| $0 - $14,000 | 10.5% |
+| $14,001 - $48,000 | 17.5% |
+| $48,001 - $70,000 | 30% |
+| $70,001 - $180,000 | 33% |
+| Over $180,000 | 39% |
+
+**Key Changes**:
+- All lower bracket thresholds increased to account for inflation
+- Tax rates remain unchanged
+
+#### Other Rates and Thresholds
+
+| Component | 2025/2026 | 2024/2025 | Notes |
+|-----------|-----------|-----------|-------|
+| **ACC Earners' Levy Rate** | 1.53% | 1.53% | No change |
+| **ACC Maximum Earnings** | $139,384 | $139,384 | No change |
+| **KiwiSaver Minimum Rate** | 3% | 3% | No change |
+| **KiwiSaver Optional Rates** | 4%, 6%, 8%, 10% | 4%, 6%, 8%, 10% | No change |
+| **Student Loan Threshold** | $24,128 | $24,128 | No change |
+| **Student Loan Rate** | 12% | 12% | No change |
+
+**Default Tax Year**: The calculator uses 2025/2026 rates by default.
+
 ---
 
 ## 3. Calculation Algorithm
 
 ### 3.1 Calculation Steps
-1. Validate input (annual salary > 0)
+1. Validate input (annual salary > 0, KiwiSaver rate is valid)
 2. Calculate annual PAYE tax using progressive tax brackets (Section 2.1)
-3. Calculate annual KiwiSaver: Annual Salary × 3%
+3. Calculate annual KiwiSaver: Annual Salary × Selected KiwiSaver Rate
 4. Calculate annual ACC: min(Annual Salary, $139,384) × 1.53%
-5. Calculate annual take-home pay: Annual Salary - PAYE - KiwiSaver - ACC
-6. Calculate monthly values: Divide all annual amounts by 12
-7. Round all currency values to 2 decimal places for display
+5. Calculate annual Student Loan Repayment (if applicable): 
+   - If hasStudentLoan AND Annual Salary > Threshold: (Annual Salary - Threshold) × 12%
+   - Else: $0.00
+6. Calculate annual take-home pay: Annual Salary - PAYE - KiwiSaver - ACC - Student Loan
+7. Calculate monthly values: Divide all annual amounts by 12
+8. Round all currency values to 2 decimal places for display
 
 ### 3.2 Precision and Rounding
 
@@ -141,14 +258,16 @@ The calculator prominently displays monthly values:
 
 - **Monthly Gross Salary**: Annual salary ÷ 12
 - **PAYE Tax**: Annual PAYE ÷ 12 (shown as deduction with minus sign)
-- **KiwiSaver (3%)**: Annual KiwiSaver ÷ 12 (shown as deduction with minus sign)
+- **KiwiSaver (X%)**: Annual KiwiSaver ÷ 12 (shown as deduction with minus sign, X = selected rate)
 - **ACC Levy (1.53%)**: Annual ACC ÷ 12 (shown as deduction with minus sign)
+- **Student Loan (12%)**: Annual Student Loan ÷ 12 (shown as deduction with minus sign, only if applicable)
 - **Take-Home Pay**: Monthly gross - monthly deductions (highlighted/emphasized)
 
 **Visual Hierarchy**:
 - Large, prominent display
 - Deductions visually distinct (prefixed with "-")
 - Take-Home Pay emphasized (larger/bolder)
+- Student Loan deduction only shown when hasStudentLoan = true
 
 ### 4.2 Annual Breakdown (Secondary Display)
 
@@ -156,14 +275,16 @@ The calculator also displays annual values in a collapsible section:
 
 - **Annual Gross Salary**: Input value
 - **PAYE Tax**: Annual PAYE (shown as deduction)
-- **KiwiSaver (3%)**: Annual KiwiSaver (shown as deduction)
+- **KiwiSaver (X%)**: Annual KiwiSaver (shown as deduction, X = selected rate)
 - **ACC Levy (1.53%)**: Annual ACC (shown as deduction)
+- **Student Loan (12%)**: Annual Student Loan (shown as deduction, only if applicable)
 - **Take-Home Pay**: Annual gross - annual deductions
 
 **Interaction**:
 - Collapsed by default (progressive disclosure)
 - Toggle label: "View Annual Breakdown"
 - Same structure as monthly breakdown
+- Student Loan row only shown when hasStudentLoan = true
 
 ### 4.3 Results Layout
 
@@ -172,8 +293,9 @@ The calculator also displays annual values in a collapsible section:
 Monthly Breakdown
   ├─ Monthly Gross Salary: $X,XXX.XX
   ├─ PAYE Tax: -$XXX.XX
-  ├─ KiwiSaver (3%): -$XXX.XX
+  ├─ KiwiSaver (X%): -$XXX.XX
   ├─ ACC Levy (1.53%): -$XX.XX
+  ├─ Student Loan (12%): -$XXX.XX (conditional - only if hasStudentLoan)
   └─ Take-Home Pay: $X,XXX.XX
 
 [▶ View Annual Breakdown]
@@ -193,8 +315,10 @@ Monthly Breakdown
 
 2. **Input Section**:
    - Annual salary input field (with label and help text)
+   - KiwiSaver rate dropdown (with label and help text)
+   - Student loan checkbox/toggle (with label and help text)
    - Calculate button
-   - Validation messages (inline, below input)
+   - Validation messages (inline, below inputs)
 
 3. **Results Section** (displayed after successful calculation):
    - Monthly breakdown (always visible)
@@ -309,7 +433,9 @@ The calculator must meet **WCAG 2.1 Level AA** standards:
 **Schema**:
 ```json
 {
-  "annualSalary": number (decimal, required)
+  "annualSalary": number (decimal, required),
+  "kiwiSaverRate": number (decimal, required),
+  "hasStudentLoan": boolean (required)
 }
 ```
 
@@ -317,11 +443,15 @@ The calculator must meet **WCAG 2.1 Level AA** standards:
 - `annualSalary` > 0.01
 - `annualSalary` ≤ 999,999,999.99
 - Must be valid decimal format
+- `kiwiSaverRate` must be one of: 0.03, 0.04, 0.06, 0.08, 0.10
+- `hasStudentLoan` must be boolean (true/false)
 
 **Example Request**:
 ```json
 {
-  "annualSalary": 60000.00
+  "annualSalary": 60000.00,
+  "kiwiSaverRate": 0.03,
+  "hasStudentLoan": true
 }
 ```
 
@@ -331,11 +461,14 @@ The calculator must meet **WCAG 2.1 Level AA** standards:
 ```json
 {
   "annualSalary": number,
+  "kiwiSaverRate": number,
+  "hasStudentLoan": boolean,
   "annual": {
     "grossSalary": number,
     "payeTax": number,
     "kiwiSaver": number,
     "accLevy": number,
+    "studentLoan": number,
     "takeHomePay": number
   },
   "monthly": {
@@ -343,28 +476,33 @@ The calculator must meet **WCAG 2.1 Level AA** standards:
     "payeTax": number,
     "kiwiSaver": number,
     "accLevy": number,
+    "studentLoan": number,
     "takeHomePay": number
   }
 }
 ```
 
-**Example Response** (for $60,000):
+**Example Response** (for $60,000, 3% KiwiSaver, with student loan):
 ```json
 {
   "annualSalary": 60000.00,
+  "kiwiSaverRate": 0.03,
+  "hasStudentLoan": true,
   "annual": {
     "grossSalary": 60000.00,
     "payeTax": 11020.00,
     "kiwiSaver": 1800.00,
     "accLevy": 918.00,
-    "takeHomePay": 46262.00
+    "studentLoan": 4304.64,
+    "takeHomePay": 41957.36
   },
   "monthly": {
     "grossSalary": 5000.00,
     "payeTax": 918.33,
     "kiwiSaver": 150.00,
     "accLevy": 76.50,
-    "takeHomePay": 3855.17
+    "studentLoan": 358.72,
+    "takeHomePay": 3496.45
   }
 }
 ```
@@ -373,7 +511,8 @@ The calculator must meet **WCAG 2.1 Level AA** standards:
 - All monetary values in NZD
 - All values rounded to 2 decimal places
 - Monthly values = Annual values ÷ 12
-- `takeHomePay` = `grossSalary` - `payeTax` - `kiwiSaver` - `accLevy`
+- `studentLoan` = $0.00 if hasStudentLoan = false OR annual salary ≤ threshold
+- `takeHomePay` = `grossSalary` - `payeTax` - `kiwiSaver` - `accLevy` - `studentLoan`
 
 ### 6.4 Error Responses
 
@@ -408,69 +547,109 @@ The calculator must meet **WCAG 2.1 Level AA** standards:
 
 ## 7. Examples and Test Cases
 
-### 7.1 Example: $60,000 Annual Salary
+### 7.1 Example: $60,000 Annual Salary (2025/2026)
 
-**Input**: Annual Salary = $60,000.00
+**Input**: 
+- Annual Salary = $60,000.00
+- KiwiSaver Rate = 3%
+- Has Student Loan = Yes
 
 **Calculation Breakdown**:
 
-**PAYE Tax** (Progressive):
-- $0 - $14,000 @ 10.5% = $1,470.00
-- $14,001 - $48,000 @ 17.5% = $5,950.00
-- $48,001 - $60,000 @ 30% = $3,600.00
-- **Total Annual PAYE**: $11,020.00
+**PAYE Tax** (Progressive, 2025/2026 brackets):
+- $0 - $15,600 @ 10.5% = $1,638.00
+- $15,601 - $53,500 @ 17.5% = $6,632.50
+- $53,501 - $60,000 @ 30% = $1,950.00
+- **Total Annual PAYE**: $10,220.50
 
 **KiwiSaver**: $60,000 × 3% = $1,800.00
 
 **ACC Levy**: $60,000 × 1.53% = $918.00 (under cap)
 
-**Annual Take-Home**: $60,000 - $11,020 - $1,800 - $918 = $46,262.00
+**Student Loan**: ($60,000 - $24,128) × 12% = $4,304.64
+
+**Annual Take-Home**: $60,000 - $10,220.50 - $1,800 - $918 - $4,304.64 = $42,756.86
 
 **Monthly Breakdown** (Annual ÷ 12):
 - Monthly Gross: $5,000.00
-- Monthly PAYE: $918.33
+- Monthly PAYE: $851.71
 - Monthly KiwiSaver: $150.00
 - Monthly ACC: $76.50
-- **Monthly Take-Home**: $3,855.17
+- Monthly Student Loan: $358.72
+- **Monthly Take-Home**: $3,563.07
 
-### 7.2 Example: $200,000 Annual Salary (ACC Cap)
+### 7.2 Example: $60,000 Annual Salary with 6% KiwiSaver (2025/2026)
 
-**Input**: Annual Salary = $200,000.00
+**Input**: 
+- Annual Salary = $60,000.00
+- KiwiSaver Rate = 6%
+- Has Student Loan = No
 
-**PAYE Tax** (Progressive):
-- $0 - $14,000 @ 10.5% = $1,470.00
-- $14,001 - $48,000 @ 17.5% = $5,950.00
-- $48,001 - $70,000 @ 30% = $6,600.00
-- $70,001 - $180,000 @ 33% = $36,300.00
+**Calculation Breakdown**:
+
+**PAYE Tax**: $10,220.50 (same as 7.1)
+
+**KiwiSaver**: $60,000 × 6% = $3,600.00
+
+**ACC Levy**: $918.00 (same as 7.1)
+
+**Student Loan**: $0.00 (no student loan)
+
+**Annual Take-Home**: $60,000 - $10,220.50 - $3,600 - $918 = $45,261.50
+
+**Monthly Breakdown**:
+- Monthly Gross: $5,000.00
+- Monthly PAYE: $851.71
+- Monthly KiwiSaver: $300.00
+- Monthly ACC: $76.50
+- **Monthly Take-Home**: $3,771.79
+
+### 7.3 Example: $200,000 Annual Salary (ACC Cap, 2025/2026)
+
+**Input**: 
+- Annual Salary = $200,000.00
+- KiwiSaver Rate = 3%
+- Has Student Loan = Yes
+
+**PAYE Tax** (Progressive, 2025/2026 brackets):
+- $0 - $15,600 @ 10.5% = $1,638.00
+- $15,601 - $53,500 @ 17.5% = $6,632.50
+- $53,501 - $78,100 @ 30% = $7,380.00
+- $78,101 - $180,000 @ 33% = $33,627.00
 - $180,001 - $200,000 @ 39% = $7,800.00
-- **Total Annual PAYE**: $58,120.00
+- **Total Annual PAYE**: $57,077.50
 
 **KiwiSaver**: $200,000 × 3% = $6,000.00
 
 **ACC Levy**: $139,384 × 1.53% = $2,132.57 (**capped at maximum earnings**)
 
-**Annual Take-Home**: $200,000 - $58,120 - $6,000 - $2,132.57 = $133,747.43
+**Student Loan**: ($200,000 - $24,128) × 12% = $21,104.64
+
+**Annual Take-Home**: $200,000 - $57,077.50 - $6,000 - $2,132.57 - $21,104.64 = $113,685.29
 
 **Monthly Breakdown**:
 - Monthly Gross: $16,666.67
-- Monthly PAYE: $4,843.33
+- Monthly PAYE: $4,756.46
 - Monthly KiwiSaver: $500.00
 - Monthly ACC: $177.71
-- **Monthly Take-Home**: $11,145.62
+- Monthly Student Loan: $1,758.72
+- **Monthly Take-Home**: $9,473.78
 
-### 7.3 Edge Cases
+### 7.4 Edge Cases
 
-| Scenario | Annual Salary | Expected Behavior | Notes |
-|----------|---------------|-------------------|-------|
-| Minimum input | $1.00 | All calculations work, very small amounts | Tests lower bound |
-| Zero salary | $0.00 | All outputs $0.00 | Special case handling |
-| First bracket boundary | $14,000 | Only first bracket applied | Bracket boundary |
-| Second bracket boundary | $48,000 | First two brackets applied | Bracket boundary |
-| Third bracket boundary | $70,000 | First three brackets applied | Bracket boundary |
-| Fourth bracket boundary | $180,000 | First four brackets applied | Bracket boundary |
-| ACC cap exact | $139,384 | ACC at maximum ($2,132.57) | ACC cap boundary |
-| ACC cap + $1 | $139,385 | ACC still at maximum | Verifies cap works |
-| High earner | $500,000 | All five brackets, ACC capped | Top bracket + cap |
+| Scenario | Annual Salary | KiwiSaver | Student Loan | Expected Behavior | Notes |
+|----------|---------------|-----------|--------------|-------------------|-------|
+| Minimum input | $1.00 | 3% | No | All calculations work, very small amounts | Tests lower bound |
+| Below student loan threshold | $24,000 | 3% | Yes | Student loan = $0.00 | No repayment required |
+| At student loan threshold | $24,128 | 3% | Yes | Student loan = $0.00 | Repayment starts above threshold |
+| Just above threshold | $24,129 | 3% | Yes | Student loan = $0.12 | Minimal repayment |
+| First bracket boundary | $15,600 | 3% | No | Only first bracket applied | 2025/2026 boundary |
+| Second bracket boundary | $53,500 | 3% | No | First two brackets applied | 2025/2026 boundary |
+| Third bracket boundary | $78,100 | 3% | No | First three brackets applied | 2025/2026 boundary |
+| Fourth bracket boundary | $180,000 | 3% | Yes | First four brackets applied | Bracket boundary |
+| ACC cap exact | $139,384 | 3% | No | ACC at maximum ($2,132.57) | ACC cap boundary |
+| High earner | $500,000 | 10% | Yes | All five brackets, ACC capped, high KiwiSaver | Top bracket + caps |
+| Variable KiwiSaver | $60,000 | 10% | No | KiwiSaver = $6,000 annual | Tests 10% rate |
 
 ---
 
@@ -480,27 +659,30 @@ The calculator must meet **WCAG 2.1 Level AA** standards:
 
 The calculator should display the following note:
 
-> **Note**: This calculation uses 2024/2025 NZ tax rates. This is an estimate and does not include other deductions such as student loans or additional voluntary contributions.
+> **Note**: This calculation uses 2025/2026 NZ tax rates (2024/2025 also available). This is an estimate and does not include other deductions such as union fees, insurance, or special tax codes.
 
 **Placement**: Below results section, in smaller text (muted color)
 
 ### 8.2 Limitations
 
 This calculator:
-- ✅ Calculates PAYE tax using 2024/2025 rates
-- ✅ Includes KiwiSaver at 3% employee contribution
-- ✅ Includes ACC Earners' Levy at 1.53%
-- ❌ Does NOT include student loan repayments
-- ❌ Does NOT include additional voluntary KiwiSaver contributions
-- ❌ Does NOT include other deductions (e.g., union fees, insurance)
+- ✅ Calculates PAYE tax using 2025/2026 rates (with 2024/2025 support)
+- ✅ Includes KiwiSaver at configurable rates (3%, 4%, 6%, 8%, 10%)
+- ✅ Includes ACC Earners' Levy at 1.53% (with maximum earnings cap)
+- ✅ Includes student loan repayments (optional, 12% above threshold)
+- ❌ Does NOT include other deductions (e.g., union fees, insurance, child support)
 - ❌ Does NOT account for secondary tax codes (assumes primary employment)
-- ❌ Does NOT account for individual tax credits or rebates
+- ❌ Does NOT account for individual tax credits or rebates (e.g., IETC, Working for Families)
+- ❌ Does NOT calculate employer contributions (e.g., employer KiwiSaver contribution)
+- ❌ Does NOT support interim/provisional tax for self-employed individuals
 
 ### 8.3 Tax Year
 
-- **Current Tax Year**: 2024/2025
-- **Update Frequency**: Annually (after NZ Budget announcement)
+- **Current Tax Year**: 2025/2026 (default)
+- **Supported Tax Years**: 2024/2025, 2025/2026
+- **Update Frequency**: Annually (after NZ Budget announcement, typically May/June)
 - **Rate Change Process**: Update tax brackets in configuration without code changes
+- **Implementation Note**: Calculator defaults to current tax year (2025/2026); previous year available for comparison
 
 ---
 
@@ -536,7 +718,7 @@ This calculator:
 | REQ-004 | Tax bracket 3 (48-70K @ 30%) | §2.1 | ✅ |
 | REQ-005 | Tax bracket 4 (70-180K @ 33%) | §2.1 | ✅ |
 | REQ-006 | Tax bracket 5 (>180K @ 39%) | §2.1 | ✅ |
-| REQ-007 | KiwiSaver 3% | §2.2 | ✅ |
+| REQ-007 | KiwiSaver variable rate | §1.3, §2.2 | ✅ |
 | REQ-008 | ACC 1.53% | §2.3 | ✅ |
 | REQ-009 | ACC cap $139,384 | §2.3 | ✅ |
 | REQ-010 | Progressive tax calculation | §2.1, §3.1 | ✅ |
@@ -547,7 +729,14 @@ This calculator:
 | REQ-015 | Display monthly KiwiSaver | §4.1 | ✅ |
 | REQ-016 | Display monthly ACC | §4.1 | ✅ |
 | REQ-017 | Display monthly take-home | §4.1 | ✅ |
-| REQ-018 | Example validation | §7.1 | ✅ Corrected |
+| REQ-018 | Example validation | §7.1, §7.2, §7.3 | ✅ Updated |
+| REQ-019 | Student loan input | §1.4 | ✅ New |
+| REQ-020 | Student loan calculation | §2.4, §3.1 | ✅ New |
+| REQ-021 | Student loan threshold $24,128 | §2.4 | ✅ New |
+| REQ-022 | Student loan rate 12% | §2.4 | ✅ New |
+| REQ-023 | Display student loan deduction | §4.1, §4.2 | ✅ New |
+| REQ-024 | 2025/2026 tax brackets | §2.1, §2.5 | ✅ New |
+| REQ-025 | 2024/2025 tax brackets (historical) | §2.5 | ✅ New |
 
 ### 10.2 Extended Requirements (Implementation Enhancements)
 
@@ -563,6 +752,9 @@ This calculator:
 | Accessibility | WCAG AA compliance | §5.4 | ✅ |
 | Responsive design | Mobile-friendly layout | §5.4 | ✅ |
 | Loading states | User feedback during calculation | §5.2 | ✅ |
+| KiwiSaver rate selector | Dropdown with 5 rate options | §1.3 | ✅ New |
+| Student loan support | Optional student loan calculation | §1.4, §2.4 | ✅ New |
+| Multi-year support | 2024/2025 and 2025/2026 tax years | §2.5 | ✅ New |
 
 ---
 
@@ -574,6 +766,7 @@ This calculator:
 |---------|------|--------|---------|
 | 1.0 | [Original] | [Original Author] | Initial specification |
 | 2.0 | 2026-02-13 | Product Owner (AI) | Comprehensive update to reflect implementation:<br>• Corrected example calculation ($60K PAYE)<br>• Added annual breakdown specification<br>• Added input validation requirements<br>• Added currency formatting and rounding rules<br>• Added UI/UX requirements<br>• Added API contract specification<br>• Added accessibility requirements (WCAG AA)<br>• Added error handling specification<br>• Added examples and edge cases<br>• Added requirement traceability |
+| 3.0 | 2026-02-13 | Product Owner (AI) | Major feature expansion:<br>• **Added student loan repayment support** (§1.4, §2.4)<br>  - Optional student loan calculation<br>  - Threshold: $24,128, Rate: 12%<br>  - Conditional display in results<br>• **Added variable KiwiSaver rates** (§1.3, §2.2)<br>  - Dropdown selector: 3%, 4%, 6%, 8%, 10%<br>  - Updated calculations and API<br>• **Added 2025/2026 tax year** (§2.5)<br>  - Updated PAYE brackets for 2025/2026<br>  - Maintained 2024/2025 for reference<br>  - Comparison table of both years<br>• Updated all examples with new calculations<br>• Updated API contract for new fields<br>• Removed lifted limitations<br>• Added new requirement IDs (REQ-019 to REQ-025) |
 
 **Review Status**: ✅ Ready for stakeholder review
 
