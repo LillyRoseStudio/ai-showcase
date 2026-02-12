@@ -1,4 +1,4 @@
-# Site Style Specification
+# UX Design Specification
 
 **Version**: 2.0  
 **Last Updated**: February 13, 2026

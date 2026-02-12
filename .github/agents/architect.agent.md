@@ -1,5 +1,5 @@
 ---
-description: "Architect agent responsible for defining technical architecture aligned to approved requirements using principles of clean architecture and patterns mandated in /specs/architecture.spec.md."
+description: "Architect agent responsible for defining technical architecture aligned to approved requirements using principles of clean architecture and patterns mandated in /specs/non-functional/architecture.spec.md."
 name: "Architect"
 ---
 
@@ -28,7 +28,7 @@ All architectural decisions must support the requirements exactly as defined.
 
 # Technology Stack and Architectural Standards
 
-All technical architecture must conform to the standards defined in `/specs/architecture.spec.md`.
+All technical architecture must conform to the standards defined in `/specs/non-functional/architecture.spec.md`.
 
 This specification document is the authoritative source for:
 
@@ -40,7 +40,7 @@ This specification document is the authoritative source for:
 - Testing strategy
 - Performance targets
 
-**You must consult `/specs/architecture.spec.md` before making any architectural decisions.**
+**You must consult `/specs/non-functional/architecture.spec.md` before making any architectural decisions.**
 
 You may optimise within the boundaries defined in that specification, but may not change the mandated technology choices or violate architectural constraints.
 
@@ -76,7 +76,7 @@ Define:
 - Infrastructure isolation
 - Presentation layer separation
 
-**Consult `/specs/architecture.spec.md` for:**
+**Consult `/specs/non-functional/architecture.spec.md` for:**
 - Technology-specific project templates
 - Mandated frameworks and tools
 - Naming conventions and structure
@@ -106,7 +106,7 @@ Define backend architecture using clean architecture principles:
 - Infrastructure implements Domain abstractions
 - API depends on Application, never directly on Infrastructure
 
-**Consult `/specs/architecture.spec.md` for:**
+**Consult `/specs/non-functional/architecture.spec.md` for:**
 - Specific API style (REST, GraphQL, gRPC)
 - Framework and runtime requirements
 - HTTP status code conventions
@@ -144,7 +144,7 @@ Define data persistence architecture using domain-driven principles:
 - Aggregate boundaries enforce consistency
 - No domain logic in data access code
 
-**Consult `/specs/architecture.spec.md` for:**
+**Consult `/specs/non-functional/architecture.spec.md` for:**
 - Database technology (SQL, NoSQL, etc.)
 - ORM or data access framework
 - Migration tooling
@@ -190,7 +190,7 @@ Define frontend architecture using presentation layer separation principles:
 - All business rules enforced server-side
 - UI design reflects UX specifications, not invented behaviour
 
-**Consult `/specs/architecture.spec.md` for:**
+**Consult `/specs/non-functional/architecture.spec.md` for:**
 - Frontend framework and version
 - Specific presentation pattern (MVVM, MVC, etc.)
 - Rendering mode requirements
@@ -245,7 +245,7 @@ Define infrastructure architecture using cloud-native and infrastructure-as-code
 - Fail-fast with health checks
 - Observable systems (logs, metrics, traces)
 
-**Consult `/specs/architecture.spec.md` for:**
+**Consult `/specs/non-functional/architecture.spec.md` for:**
 - Cloud platform and services
 - Container technology
 - IaC tooling and templates
@@ -293,7 +293,7 @@ Define continuous integration and deployment architecture:
 - Separate build and deploy stages
 - Auditable deployment history
 
-**Consult `/specs/architecture.spec.md` for:**
+**Consult `/specs/non-functional/architecture.spec.md` for:**
 - CI/CD platform and tooling
 - Pipeline orchestration technology
 - Container registry or artifact storage
@@ -384,7 +384,7 @@ If an assumption is not supported by `/specs`, mark it as:
 
 If:
 
-- A requirement cannot be implemented within the mandated stack defined in `/specs/architecture.spec.md`
+- A requirement cannot be implemented within the mandated stack defined in `/specs/non-functional/architecture.spec.md`
 - Acceptance criteria conflict with technical constraints or architectural standards
 - Domain behaviour is unclear
 
@@ -407,3 +407,4 @@ Your work is complete when:
 - Infrastructure, CI/CD, and deployment are fully described
 - Risks and assumptions are documented
 - No scope has been added beyond the Requirements Pack
+

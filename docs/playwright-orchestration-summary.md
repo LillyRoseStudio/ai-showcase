@@ -18,7 +18,7 @@ Successfully orchestrated the implementation of comprehensive Playwright UI test
 
 ### Spec Sources
 - ✅ `specs/PAYE-calculator.spec.md` - Core calculation requirements
-- ✅ `specs/site-style.spec.md` - UI/UX requirements
+- ✅ `specs/us-design.spec.md` - UI/UX requirements
 - ✅ `docs/test-matrix.md` - Complete test coverage matrix
 - ✅ `docs/ux-design-specification.md` - Interaction patterns
 

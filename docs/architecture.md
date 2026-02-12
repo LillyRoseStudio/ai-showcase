@@ -68,7 +68,7 @@
   - *Traceability:* Already configured in project
   
 - **Styling:** CSS (custom, Bootstrap-inspired)
-  - *Rationale:* Aligns with site-style.spec.md inspiration
+  - *Rationale:* Aligns with ux-design.spec.md inspiration
   - *Traceability:* Site style spec sections 3, 4, 5, 6
 
 #### Infrastructure

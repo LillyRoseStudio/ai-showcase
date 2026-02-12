@@ -10,12 +10,23 @@ All code, design, planning, and documentation must align with this structure.
 
 All functional behaviour originates from the `/specs` folder.
 
+**Specification Organization:**
+- **Non-Functional Specs** (`/specs/non-functional/`) - Cross-cutting concerns (architecture, UX design)
+- **Functional Specs** (`/specs/functional/`) - Feature-specific requirements
+
+**Rules:**
 - Do not invent requirements.
 - Do not assume behaviour not defined in `/specs`.
 - If behaviour is unclear, surface the ambiguity.
 - All changes must be traceable to a spec.
 
 If a requested feature is not defined in `/specs`, suggest creating or updating a spec file before implementation.
+
+**Mandatory Specifications:**
+Before any work proceeds, these must exist:
+- `/specs/non-functional/architecture.spec.md` (technology stack and patterns)
+- `/specs/non-functional/ux-design.spec.md` (design system and UX standards)
+- At least one feature spec in `/specs/functional/`
 
 ---
 
@@ -44,11 +55,11 @@ When generating content, respect role boundaries:
 
 ## 3. Architectural Constraints
 
-All systems must use:
+All technical architecture must conform to standards defined in `/specs/non-functional/architecture.spec.md`.
 
+**Key mandates include:**
 - Hosting: Azure Container Apps
-- Backend: .NET 10
-- API style: REST
+- Backend: .NET 10, REST APIs
 - ORM: Entity Framework Core
 - Database: SQL Server
 - Frontend: Blazor using MVVM
@@ -56,7 +67,15 @@ All systems must use:
 - Infrastructure as Code: Bicep
 - Local orchestration: .NET Aspire
 
-Do not propose alternative stacks unless explicitly asked.
+**Consult `/specs/non-functional/architecture.spec.md` for:**
+- Complete technology stack requirements
+- Architectural patterns and layering rules
+- API design standards
+- Security and compliance requirements
+- Testing strategy
+- Performance targets
+
+Do not propose alternative stacks unless explicitly asked. Architecture decisions must comply with the spec.
 
 ---
 
@@ -80,6 +99,13 @@ Frontend must follow MVVM:
 - Views contain markup only.
 - ViewModels contain UI state and logic.
 - No domain rules in UI.
+
+**Consult `/specs/non-functional/ux-design.spec.md` for:**
+- Visual design system (colors, typography, spacing)
+- Component library specifications
+- Interaction patterns and states
+- Accessibility standards (WCAG compliance)
+- Responsive design requirements
 
 ---
 

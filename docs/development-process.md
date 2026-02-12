@@ -23,6 +23,10 @@ Our development team consists of specialized roles:
 ### 1. Source of Truth: `/specs`
 All requirements must be traceable to files in the `/specs` directory. No work proceeds without specification backing.
 
+Specifications are organized by type:
+- **Non-Functional Specifications** (`/specs/non-functional/`) - Cross-cutting concerns like architecture and UX design that apply to all features
+- **Functional Specifications** (`/specs/functional/`) - Specific features and business capabilities
+
 ### 2. Domain Expert Authority
 Only the Domain Expert can interpret business domain concepts. All other team members are domain-agnostic and must consult the Domain Expert for domain clarification.
 
@@ -34,18 +38,94 @@ If a requirement cannot be supported by existing specs:
 
 ## Development Workflow
 
+### Step 0: Pre-Flight Specification Checks
+
+**Objective:** Verify all mandatory specifications exist before any work begins
+
+**BLOCKING REQUIREMENT:** Work cannot proceed unless all required specifications exist.
+
+#### Mandatory Non-Functional Specifications
+
+These cross-cutting specifications MUST exist before any feature work:
+
+- ✅ **`/specs/non-functional/architecture.spec.md`**
+  - Mandated technology stack
+  - Architectural patterns and layering requirements
+  - API design standards
+  - Security and compliance requirements
+  - Infrastructure as Code guidelines
+  - CI/CD pipeline standards
+  - Performance targets
+
+- ✅ **`/specs/non-functional/ux-design.spec.md`**
+  - Visual design system (colors, typography, spacing)
+  - Component library specifications
+  - Interaction patterns and states
+  - Accessibility standards (WCAG compliance)
+  - Responsive design requirements
+
+**If either specification is missing:**
+1. STOP immediately
+2. Document which specification is missing
+3. Request specification creation
+4. Do not proceed to Step 1 until specifications exist
+
+#### Mandatory Functional Specification
+
+At least one feature specification MUST exist in `/specs/functional/`:
+
+- ✅ **`/specs/functional/<feature-name>.spec.md`**
+  - Feature overview and business purpose
+  - Domain glossary
+  - Functional requirements with acceptance criteria
+  - API contracts (if applicable)
+  - Business rules and validation logic
+  - User interaction flows
+
+**If no functional specification exists for the requested feature:**
+1. STOP immediately
+2. Request functional specification creation
+3. Do not proceed to Step 1 until specification exists
+
+**Verification Checklist:**
+
+```
+☐ Architecture specification exists and is current
+☐ UX design specification exists and is current
+☐ Functional specification exists for target feature
+☐ All specifications have version numbers and last updated dates
+☐ No conflicting definitions across specifications
+```
+
+**Only proceed to Step 1 when all checks pass.**
+
+---
+
 ### Step 1: Intake and Scope
 
 **Objective:** Understand what change is being requested
 
+**Prerequisites:** Step 0 Pre-Flight Checks passed
+
 **Activities:**
-- Identify the target outcome
-- List relevant spec files from `/specs` that apply
-- If no specs exist, stop and request spec addition
+- Identify the target outcome (what feature or change is requested)
+- Confirm which functional specification covers this work (from `/specs/functional/`)
+- Identify any additional non-functional concerns (reference `/specs/non-functional/`)
+- Verify specification coverage is complete
+
+**If specification gaps are discovered:**
+- Document the gap specifically
+- Identify which specification needs updating (functional or non-functional)
+- Stop work and request specification update
+- Return to Step 0 after specification is updated
 
 **Output:**
 - Clear statement of what needs to be built
-- List of applicable spec references
+- Primary functional specification reference: `/specs/functional/<feature-name>.spec.md`
+- Referenced non-functional specifications:
+  - Architecture spec (always referenced)
+  - UX design spec (always referenced for UI work)
+- List of specific sections within each spec that apply
 
 ---
 
@@ -62,14 +142,19 @@ If a requirement cannot be supported by existing specs:
 ```
 Requirements Pack
 ├── Spec Sources Used
-│   └── specs/<file>#<heading>
+│   ├── Functional Specs:
+│   │   └── /specs/functional/<feature>.spec.md#<heading>
+│   └── Non-Functional Specs:
+│       ├── /specs/non-functional/architecture.spec.md#<heading> (if referenced)
+│       └── /specs/non-functional/ux-design.spec.md#<heading> (if referenced)
 ├── Glossary
-│   └── Terms and definitions (with spec references)
+│   └── Terms and definitions (with spec references to functional specs)
 └── Requirements
     └── For each requirement:
         ├── ID (e.g., REQ-001)
+        ├── Type (Functional or Non-Functional)
         ├── Summary
-        ├── Spec Reference (specs/<file>#<heading>)
+        ├── Spec Reference (/specs/<category>/<file>#<heading>)
         ├── Acceptance Criteria (testable)
         ├── Open Questions (if specs unclear)
         └── Spec Gaps (what is missing and where)
@@ -122,20 +207,30 @@ Each specialist receives:
 
 #### Architect
 
+**Input Requirement:**
+- MUST consult `/specs/non-functional/architecture.spec.md` before all decisions
+- All architectural decisions must comply with mandated technology stack and patterns
+
 **Deliverables:**
 - Architecture outline and key decisions
 - Interfaces and boundaries
 - Cross-cutting concerns (security, logging, etc.)
 - Risks and mitigations
 - **Flag any conflicts with requirements**
+- **Flag any conflicts with architecture specification**
 
 #### UX Designer
 
+**Input Requirement:**
+- MUST consult `/specs/non-functional/ux-design.spec.md` before all decisions
+- All design decisions must comply with design system and accessibility standards
+
 **Deliverables:**
 - User journeys and screen flows
-- Design system impacts
+- Design system impacts (or confirmation of existing patterns)
 - Interaction patterns and states
 - All tied to acceptance criteria
+- **Flag any conflicts with UX design specification**
 
 #### Backend Developer
 
@@ -183,11 +278,25 @@ Each specialist receives:
      - Code changes (frontend and/or backend)
      - Tests (QA coverage)
      - Documentation (where applicable)
+   - All requirements trace to functional specs in `/specs/functional/`
 
 2. **Acceptance Criteria Gate**
    - All acceptance criteria covered by tests or explicit verification steps
+   - Test results demonstrate spec compliance
 
-3. **Consistency Gate**
+3. **Non-Functional Compliance Gate**
+   - Architecture implementation verified against `/specs/non-functional/architecture.spec.md`:
+     - Technology stack compliance
+     - Layering and dependency rules followed
+     - API design standards adhered to
+     - Security requirements met
+   - UX implementation verified against `/specs/non-functional/ux-design.spec.md`:
+     - Design system compliance
+     - Component usage correct
+     - Accessibility standards met
+     - Interaction patterns followed
+
+4. **Consistency Gate**
    - No unresolved conflicts between UX, architecture, and implementation plans
    - Documentation consistency verified:
      - No redundant specifications between `/specs` and `/docs`
@@ -195,9 +304,10 @@ Each specialist receives:
      - Implementation guidance in `/docs` references `/specs` (never duplicates)
      - Conflicts flagged and resolved
 
-4. **Spec Gaps Gate**
+5. **Spec Gaps Gate**
    - All spec gaps documented
-   - Routed to spec update process
+   - Categorized by type (functional or non-functional)
+   - Routed to appropriate spec update process
 
 ---
 
@@ -245,13 +355,28 @@ The following diagram illustrates how a typical feature request flows through ou
 
 ```mermaid
 graph TD
-    Start([Feature Request]) --> Intake[Step 1: Intake & Scope]
-    Intake --> SpecCheck{Specs<br/>Exist?}
+    Start([Feature Request]) --> PreFlight[Step 0: Pre-Flight Specification Checks]
     
-    SpecCheck -->|No| RequestSpec[Request Spec Addition]
-    RequestSpec --> End1([Blocked - Await Spec])
+    PreFlight --> ArchSpecCheck{Architecture<br/>Spec Exists?}
+    ArchSpecCheck -->|No| BlockArch[Blocked: Create architecture.spec.md]
+    BlockArch --> End1([Blocked - Missing Spec])
     
-    SpecCheck -->|Yes| DomainExpert[Step 2: Domain Expert<br/>Creates Requirements Pack]
+    ArchSpecCheck -->|Yes| UXSpecCheck{UX Design<br/>Spec Exists?}
+    UXSpecCheck -->|No| BlockUX[Blocked: Create ux-design.spec.md]
+    BlockUX --> End1
+    
+    UXSpecCheck -->|Yes| FuncSpecCheck{Functional<br/>Spec Exists?}
+    FuncSpecCheck -->|No| BlockFunc[Blocked: Create feature spec]
+    BlockFunc --> End1
+    
+    FuncSpecCheck -->|Yes| Intake[Step 1: Intake & Scope]
+    
+    Intake --> SpecCoverage{Spec Coverage<br/>Complete?}
+    SpecCoverage -->|No| SpecGapFound[Document Spec Gap]
+    SpecGapFound --> RequestSpec[Request Spec Update]
+    RequestSpec --> End2([Blocked - Await Spec Update])
+    
+    SpecCoverage -->|Yes| DomainExpert[Step 2: Domain Expert<br/>Creates Requirements Pack]
     
     DomainExpert --> ValidateReqs{All Requirements<br/>Have Spec<br/>References?}
     ValidateReqs -->|No| RejectReqs[Reject & Request Correction]
@@ -261,8 +386,8 @@ graph TD
     
     TaskPlanner --> ParallelWork[Step 4: Parallel Specialist Work]
     
-    ParallelWork --> Architect[Architect:<br/>Architecture & Decisions]
-    ParallelWork --> UX[UX Designer:<br/>Journeys & Screens]
+    ParallelWork --> Architect[Architect:<br/>Architecture & Decisions<br/>Consults architecture.spec.md]
+    ParallelWork --> UX[UX Designer:<br/>Journeys & Screens<br/>Consults ux-design.spec.md]
     ParallelWork --> Backend[Backend Dev:<br/>APIs & Data Model]
     ParallelWork --> Frontend[Frontend Dev:<br/>UI Implementation]
     ParallelWork --> QA[QA:<br/>Test Matrix]
@@ -285,15 +410,15 @@ graph TD
     AcceptGate -->|No| FixAccept[Add Missing Tests/Verification]
     FixAccept --> IntegrationGates
     
-    AcceptGate -->|Yes| ConsistGate{Consistency<br/>Gate Pass?}
+    AcceptGate -->|Yes| NonFuncGate{Non-Functional<br/>Compliance<br/>Gate Pass?}
+    NonFuncGate -->|No| FixNonFunc[Fix Architecture/UX<br/>Compliance Issues]
+    FixNonFunc --> IntegrationGates
+    
+    NonFuncGate -->|Yes| ConsistGate{Consistency<br/>Gate Pass?}
     ConsistGate -->|No| ResolveConflict[Resolve Conflicts]
     ResolveConflict --> IntegrationGates
     
-    ConsistGate -->|Yes| DocConsistGate{Documentation<br/>Consistency<br/>Gate Pass?}
-    DocConsistGate -->|No| FixDocConflict[Resolve Redundancy/<br/>Conflicts in Docs]
-    FixDocConflict --> IntegrationGates
-    
-    DocConsistGate -->|Yes| SpecGapGate{Spec Gaps<br/>Documented?}
+    ConsistGate -->|Yes| SpecGapGate{Spec Gaps<br/>Documented?}
     SpecGapGate -->|No| DocGaps[Document Gaps]
     DocGaps --> IntegrationGates
     
@@ -303,17 +428,23 @@ graph TD
     
     DomainExpert -.->|Domain Ambiguity| DomainQuery[Domain Question]
     Architect -.->|Domain Ambiguity| DomainQuery
+    Architect -.->|Architecture Conflict| ArchConflict[Flag Architecture<br/>Spec Violation]
     UX -.->|Domain Ambiguity| DomainQuery
+    UX -.->|UX Conflict| UXConflict[Flag UX Design<br/>Spec Violation]
     Backend -.->|Domain Ambiguity| DomainQuery
     Frontend -.->|Domain Ambiguity| DomainQuery
     QA -.->|Domain Ambiguity| DomainQuery
     ImplEng -.->|Domain Ambiguity| DomainQuery
     
     DomainQuery --> DomainExpert
+    ArchConflict --> DomainExpert
+    UXConflict --> DomainExpert
     
     style Start fill:#e1f5ff
+    style PreFlight fill:#ffffcc
     style Complete fill:#d4edda
     style End1 fill:#f8d7da
+    style End2 fill:#f8d7da
     style DomainExpert fill:#fff3cd
     style ParallelWork fill:#e7e7ff
     style IntegrationGates fill:#ffe7e7
@@ -346,26 +477,50 @@ From requirements to code to tests to documentation, every artifact links back t
 A: All requirements must be in `/specs`. If something is obvious, it should be quick to document. This maintains our single source of truth.
 
 **Q: Can a developer suggest an improvement not in the specs?**  
-A: Yes, but it must go through the spec update process first. Document it as a spec gap and route it appropriately.
+A: Yes, but it must go through the spec update process first. Determine if it's a functional improvement (add to feature spec in `/specs/functional/`) or a non-functional improvement (add to `/specs/non-functional/`). Document it as a spec gap and route it appropriately.
+
+**Q: What's the difference between functional and non-functional specs?**  
+A: 
+- **Functional specs** (`/specs/functional/`) define WHAT we build - specific features, user stories, business capabilities
+- **Non-functional specs** (`/specs/non-functional/`) define HOW we build - architecture, design system, security, performance standards that apply to all features
+
+**Q: What if I need to update a non-functional spec?**  
+A: Non-functional spec changes affect all features. Document the proposed change, assess impact across all existing features, and get Product Owner approval before proceeding.
 
 **Q: What if the Domain Expert is unsure about something?**  
-A: Document it as an open question or spec gap. Either clarify the spec or escalate for a spec amendment.
+A: Document it as an open question or spec gap. Identify which spec needs clarification (functional or non-functional). Either clarify the spec or escalate for a spec amendment.
 
 **Q: How do we handle urgent hotfixes?**  
-A: Same process, accelerated timeline. The workflow ensures quality even under pressure. Skip steps only with explicit acknowledgment of risks.
+A: Same process, accelerated timeline. The Step 0 pre-flight checks are NON-NEGOTIABLE even for hotfixes. If specs exist, proceed quickly through steps. The workflow ensures quality even under pressure.
 
 **Q: What if specialists disagree on an approach?**  
-A: The Product Owner identifies the conflict and routes it to the Domain Expert if it's domain-related, or facilitates resolution if it's technical. Requirements and specs are the tiebreaker.
+A: The Product Owner identifies the conflict and routes it to the Domain Expert if it's domain-related (functional), to the Architect if it's architecture-related (non-functional), or to the UX Designer if it's design-related (non-functional). Specs are the tiebreaker.
+
+**Q: Can we have multiple functional specs?**  
+A: Yes! As features grow, create separate functional specs for each major feature or bounded context in `/specs/functional/`. Non-functional specs should remain few and comprehensive.
+
+**Q: What if a requirement conflicts with a non-functional spec?**  
+A: The non-functional spec wins unless there's a compelling reason to change it. Document the conflict, escalate to Product Owner. Changing non-functional specs requires impact assessment across all features.
 
 ---
 
 ## Conclusion
 
 This orchestrated process ensures:
-- **Traceability**: Every line of code ties to a requirement and specification
-- **Quality**: Multiple gates catch issues before integration
-- **Efficiency**: Parallel work streams reduce cycle time
-- **Consistency**: All team members work from the same requirements pack
-- **Accountability**: Clear roles and deliverables for each specialist
+- **Specification Integrity**: Mandatory pre-flight checks ensure foundational specs exist before work begins
+- **Clear Categorization**: Functional vs non-functional specs provide clear separation of concerns
+- **Traceability**: Every line of code ties to a requirement and specification with full path references
+- **Quality**: Multiple gates catch issues before integration, including compliance with non-functional standards
+- **Efficiency**: Parallel work streams reduce cycle time while maintaining architectural and design consistency
+- **Consistency**: All team members work from the same requirements pack and reference the same authoritative specs
+- **Accountability**: Clear roles and deliverables for each specialist, with mandatory spec consultation
+
+**Key Safeguards:**
+1. **No work without specs** - Step 0 pre-flight checks are non-negotiable
+2. **Non-functional specs are foundational** - Architecture and UX design specs must exist and be consulted
+3. **Functional specs define the domain** - Feature requirements traced to functional specs
+4. **Specs are authoritative** - When in conflict, specs win; when unclear, specs are amended
+
+By following this process, we deliver features that meet specifications, comply with architectural and design standards, pass quality gates, and are fully documented for deployment and maintenance.
 
 By following this process, we deliver features that meet specifications, pass quality gates, and are fully documented for deployment and maintenance.
