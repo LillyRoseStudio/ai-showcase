@@ -68,6 +68,11 @@ If implementation details are unclear or missing, escalate to the Product Owner.
    - Test
    - Production
 
+5. **All documentation must live in `/docs`.**
+   - Do not create operational markdown files outside `/docs`.
+   - README.md may contain a high-level overview only.
+   - Detailed guides must be created or updated under `/docs`.
+
 ---
 
 # Responsibilities
@@ -263,3 +268,7 @@ Your work is complete when:
 - User-facing features are documented accurately
 - All documentation aligns with implemented behaviour
 - No undocumented configuration or hidden steps remain
+- All implementation and operational documentation exists under `/docs`
+- No operational documentation exists outside `/docs`
+- A new developer can set up the system using `/docs` only
+- Deployment and operational guides are accurate and executable
