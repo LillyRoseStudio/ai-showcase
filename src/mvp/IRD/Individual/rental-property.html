@@ -5,14 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rental Property Portfolio</title>
     <!-- REQ-001: Reuse shared design system -->
+    <link rel="stylesheet" href="../../shared/design-tokens.css">
     <link rel="stylesheet" href="../../styles.css">
     <link rel="stylesheet" href="rental-styles.css">
+    <link rel="stylesheet" href="../../components/components.css">
 </head>
 <body>
     <main class="rental-container">
-        <!-- REQ-001: Back to main -->
-        <a href="../../index.html" class="back-link">Back to Dashboard</a>
-
         <!-- REQ-001, REQ-008: Page header with tax year badge -->
         <header class="page-header">
             <h1>Rental Property Portfolio</h1>
@@ -73,6 +72,10 @@
     </main>
 
     <script src="rental-app.js"></script>
+    <script type="module">
+        import { mountNavSidebar } from '../../components/nav-sidebar.js';
+        mountNavSidebar({ activePage: 'rental', basePath: '../../' });
+    </script>
     <script>
         /* ================================================
            Portfolio List Page — Controller

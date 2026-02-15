@@ -1,54 +1,4 @@
 /* ================================================
-   Design Tokens
-   ================================================ */
-:root {
-    --color-bg-primary: #0d1117;
-    --color-bg-secondary: #161b22;
-    --color-bg-accent: #21262d;
-    --color-bg-hover: #30363d;
-    --color-text-primary: #e6edf3;
-    --color-text-secondary: #9198a1;
-    --color-text-tertiary: #6e7681;
-    --color-accent-primary: #2f81f7;
-    --color-accent-primary-hover: #539bf5;
-    --color-accent-primary-active: #6ca6ff;
-    --color-success: #3fb950;
-    --color-success-bg: #1f3326;
-    --color-error: #f85149;
-    --color-error-bg: #3b1219;
-    --color-warning: #d29922;
-    --color-border: #30363d;
-    --color-border-muted: #21262d;
-
-    --font-family-base: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
-    --font-family-mono: ui-monospace, 'Cascadia Code', 'SF Mono', Monaco, 'Courier New', monospace;
-
-    --font-size-xs: 0.75rem;
-    --font-size-sm: 0.875rem;
-    --font-size-base: 1rem;
-    --font-size-lg: 1.125rem;
-    --font-size-xl: 1.5rem;
-    --font-size-2xl: 2rem;
-
-    --spacing-xs: 0.25rem;
-    --spacing-sm: 0.5rem;
-    --spacing-md: 1rem;
-    --spacing-lg: 1.5rem;
-    --spacing-xl: 2rem;
-    --spacing-2xl: 3rem;
-
-    --radius-sm: 0.25rem;
-    --radius-md: 0.5rem;
-    --radius-lg: 0.75rem;
-
-    --shadow-sm: 0 0 0 1px rgba(255, 255, 255, 0.05);
-    --shadow-md: 0 0 0 1px rgba(255, 255, 255, 0.1), 0 8px 16px rgba(0, 0, 0, 0.4);
-
-    --transition-fast: 150ms ease-in-out;
-    --transition-base: 250ms ease-in-out;
-}
-
-/* ================================================
    Reset & Base
    ================================================ */
 *,
@@ -436,6 +386,35 @@ details .breakdown {
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
     }
+}
+
+/* ================================================
+   Dashboard Cards
+   ================================================ */
+.dashboard-card {
+    display: block;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.dashboard-card:hover {
+    border-color: var(--color-accent-primary);
+    box-shadow: var(--shadow-md), 0 0 0 1px var(--color-accent-primary);
+}
+
+.dashboard-card__title {
+    font-size: var(--font-size-xl);
+    font-weight: 700;
+    color: var(--color-accent-primary);
+    margin-bottom: var(--spacing-sm);
+}
+
+.dashboard-card__description {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    line-height: 1.5;
 }
 
 /* ================================================

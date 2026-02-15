@@ -5,14 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add / Edit Rental Property</title>
     <!-- REQ-001: Reuse shared design system -->
+    <link rel="stylesheet" href="../../shared/design-tokens.css">
     <link rel="stylesheet" href="../../styles.css">
     <link rel="stylesheet" href="rental-styles.css">
+    <link rel="stylesheet" href="../../components/components.css">
 </head>
 <body>
     <main class="rental-container">
-        <!-- REQ-001: Back to portfolio -->
-        <a href="rental-property.html" class="back-link">Back to Portfolio</a>
-
         <header class="page-header">
             <h1 id="page-title">Add Rental Property</h1>
         </header>
@@ -136,6 +135,10 @@
     </main>
 
     <script src="rental-app.js"></script>
+    <script type="module">
+        import { mountNavSidebar } from '../../components/nav-sidebar.js';
+        mountNavSidebar({ activePage: 'rental', basePath: '../../' });
+    </script>
     <script>
         /* ================================================
            Property Edit Page — Controller

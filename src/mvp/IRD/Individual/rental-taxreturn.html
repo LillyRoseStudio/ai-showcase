@@ -5,14 +5,13 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tax Return — Rental Property</title>
     <!-- REQ-017: Reuse shared design system -->
+    <link rel="stylesheet" href="../../shared/design-tokens.css">
     <link rel="stylesheet" href="../../styles.css">
     <link rel="stylesheet" href="rental-styles.css">
+    <link rel="stylesheet" href="../../components/components.css">
 </head>
 <body>
     <main class="rental-container">
-        <!-- REQ-017: Back to portfolio -->
-        <a href="rental-property.html" class="back-link">Back to Portfolio</a>
-
         <!-- REQ-017: Page header with tax year and status -->
         <header class="page-header">
             <h1>Tax Return</h1>
@@ -142,6 +141,10 @@
     </main>
 
     <script src="rental-app.js"></script>
+    <script type="module">
+        import { mountNavSidebar } from '../../components/nav-sidebar.js';
+        mountNavSidebar({ activePage: 'rental', basePath: '../../' });
+    </script>
     <script>
         /* ================================================
            Tax Return Page — Controller
