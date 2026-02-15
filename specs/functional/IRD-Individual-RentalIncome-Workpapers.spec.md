@@ -191,6 +191,7 @@ Each property has a single workpaper per tax year containing:
 * Display status
 * Display prepared by
 * Show warnings and net position
+* Remove property from portfolio
 
 ### Totals Panel
 
@@ -208,6 +209,17 @@ Each property has a single workpaper per tax year containing:
 * Edit property metadata
 * Ownership percentage
 * Property flags
+* Remove property
+
+### Remove Property Rules
+
+* A property may be removed from the portfolio by the user.
+* Removal requires explicit confirmation (e.g. confirmation dialog).
+* A property with a workpaper in Locked status cannot be removed.
+* When a property is removed, all associated workpapers, expense lines, evidence links, contributor records, and activity log entries for that property are also removed.
+* Removal is permanent and cannot be undone.
+* Portfolio totals must be recalculated after removal.
+* Removal must be recorded in the activity log of the portfolio (not the workpaper) before the property data is deleted.
 
 ---
 
@@ -307,6 +319,7 @@ If Net < 0 then LossCarryForward = abs(Net)
 
 * Missing inputs
 * Invalid days
+* Removal blocked for locked workpapers
 
 ## Warning
 
@@ -332,6 +345,10 @@ GET /api/rental/workpapers/{id}
 POST /api/rental/workpapers/{id}/calculate
 PUT /api/rental/workpapers/{id}
 POST /api/rental/workpapers/{id}/complete
+
+## Property
+
+DELETE /api/rental/properties/{id}
 
 ## Assign Owner
 
@@ -365,7 +382,7 @@ POST /api/rental/workpapers/{id}/assign
 
 | ID      | Description             |
 | ------- | ----------------------- |
-| REQ-001 | Manage properties       |
+| REQ-001 | Manage properties (add, edit, remove) |
 | REQ-002 | Capture expenses        |
 | REQ-003 | Ownership handling      |
 | REQ-004 | Multi-user contributors |
