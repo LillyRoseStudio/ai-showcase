@@ -18,6 +18,8 @@
             <h1>Rental Property Portfolio</h1>
             <div class="page-header-actions">
                 <span class="tax-year-badge" id="tax-year-badge" aria-label="Tax year"></span>
+                <!-- REQ-017: Tax Return -->
+                <a href="rental-taxreturn.html" class="btn-primary--compact" role="button">Tax Return</a>
                 <!-- REQ-001: Add property -->
                 <a href="rental-property-edit.html" class="btn-primary--compact" role="button">
                     + Add Property
@@ -122,6 +124,7 @@
                         '<span class="property-card__address">' + escapeHtml(prop.addressLine1 + ', ' + prop.city) + '</span>' +
                         '<div class="property-card__meta">' +
                             '<span>' + escapeHtml(formatCategory(prop.propertyType)) + '</span>' +
+                            '<span>' + escapeHtml(prop.taxClassification || 'Residential') + '</span>' +
                             '<span>' + Math.round(prop.ownershipPercentage * 100) + '% owned</span>' +
                         '</div>' +
                     '</div>' +

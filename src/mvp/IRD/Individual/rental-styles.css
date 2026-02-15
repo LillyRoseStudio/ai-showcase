@@ -448,6 +448,89 @@
 }
 
 /* ------------------------------------------------
+   Computed Value Display (REQ-014)
+   ------------------------------------------------ */
+.computed-value {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-lg);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background-color: var(--color-bg-accent);
+    border: 1px solid var(--color-border-muted);
+    border-radius: var(--radius-md);
+}
+
+/* ------------------------------------------------
+   Contributors Table (REQ-012)
+   ------------------------------------------------ */
+.contributors-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.contributors-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+}
+
+.contributors-table th,
+.contributors-table td {
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-muted);
+    vertical-align: middle;
+}
+
+.contributors-table th {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background-color: var(--color-bg-accent);
+    position: sticky;
+    top: 0;
+}
+
+.contributors-table tbody tr:hover {
+    background-color: var(--color-bg-accent);
+}
+
+.contributors-table .checkbox-cell {
+    text-align: center;
+    width: 80px;
+}
+
+.contributors-table .actions-cell {
+    text-align: right;
+    white-space: nowrap;
+}
+
+/* ------------------------------------------------
+   Contributors Add Form (REQ-012)
+   ------------------------------------------------ */
+.contributor-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: var(--spacing-sm);
+    align-items: end;
+    margin-bottom: var(--spacing-lg);
+}
+
+.contributor-form .form-group {
+    margin-bottom: 0;
+}
+
+.contributor-form input[type="text"],
+.contributor-form select {
+    font-size: var(--font-size-sm);
+    padding: 0.5rem 0.75rem;
+    min-height: 40px;
+}
+
+/* ------------------------------------------------
    Responsive — module-specific overrides at 640px
    Shared component responsive rules are in styles.css
    ------------------------------------------------ */
@@ -485,5 +568,213 @@
 
     .activity-entry__time {
         min-width: auto;
+    }
+
+    .contributor-form {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ================================================
+   Milestone 7: Tax Return Page Styles
+   REQ-017, REQ-019, REQ-020, REQ-023
+   ================================================ */
+
+/* ------------------------------------------------
+   Tax Return Status Badge — Draft (REQ-017)
+   ------------------------------------------------ */
+.status-badge--Draft {
+    background-color: var(--color-bg-accent);
+    color: var(--color-text-tertiary);
+}
+
+/* ------------------------------------------------
+   Tax Return — Generation Form (REQ-017)
+   ------------------------------------------------ */
+.taxreturn-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--spacing-md);
+    align-items: start;
+    margin-bottom: var(--spacing-lg);
+}
+
+.taxreturn-form .form-group {
+    margin-bottom: 0;
+}
+
+/* ------------------------------------------------
+   IR3 Field Display (REQ-019)
+   ------------------------------------------------ */
+.ir3-section-heading {
+    font-size: var(--font-size-base);
+    font-weight: 700;
+    color: var(--color-text-primary);
+    margin-top: var(--spacing-lg);
+    margin-bottom: var(--spacing-sm);
+    padding-bottom: var(--spacing-xs);
+    border-bottom: 1px solid var(--color-border-muted);
+}
+
+.ir3-section-heading:first-child {
+    margin-top: 0;
+}
+
+.ir3-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+}
+
+.ir3-field-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--spacing-sm) 0;
+    border-bottom: 1px solid var(--color-border-muted);
+}
+
+.ir3-field-row:last-child {
+    border-bottom: none;
+}
+
+.ir3-field-key {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: var(--color-accent-primary);
+    font-family: var(--font-family-mono);
+    min-width: 80px;
+    margin-right: var(--spacing-md);
+}
+
+.ir3-field-label {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-secondary);
+    flex: 1;
+}
+
+.ir3-field-value {
+    font-family: var(--font-family-mono);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+    text-align: right;
+    min-width: 100px;
+}
+
+/* ------------------------------------------------
+   IR3R Schedule Table (REQ-020)
+   ------------------------------------------------ */
+.schedule-table-wrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.schedule-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--font-size-sm);
+}
+
+.schedule-table th,
+.schedule-table td {
+    padding: var(--spacing-sm) var(--spacing-md);
+    text-align: left;
+    border-bottom: 1px solid var(--color-border-muted);
+    vertical-align: middle;
+}
+
+.schedule-table th {
+    font-size: var(--font-size-xs);
+    font-weight: 700;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    background-color: var(--color-bg-accent);
+    position: sticky;
+    top: 0;
+    white-space: nowrap;
+}
+
+.schedule-table tbody tr:hover {
+    background-color: var(--color-bg-accent);
+}
+
+.schedule-table .amount-cell {
+    font-family: var(--font-family-mono);
+    text-align: right;
+    white-space: nowrap;
+}
+
+.schedule-total-row td {
+    font-weight: 700;
+    border-top: 2px solid var(--color-border);
+    padding-top: var(--spacing-md);
+}
+
+/* ------------------------------------------------
+   Validation Panel (REQ-023)
+   ------------------------------------------------ */
+.validation-panel {
+    margin-top: var(--spacing-md);
+}
+
+.validation-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    margin-top: var(--spacing-sm);
+}
+
+.validation-item {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    font-size: var(--font-size-sm);
+}
+
+.validation-item--blocking {
+    background-color: rgba(248, 81, 73, 0.1);
+    color: var(--color-error);
+    border: 1px solid rgba(248, 81, 73, 0.2);
+}
+
+.validation-item--warning {
+    background-color: rgba(210, 153, 34, 0.1);
+    color: var(--color-warning);
+    border: 1px solid rgba(210, 153, 34, 0.2);
+}
+
+.validation-empty {
+    font-size: var(--font-size-sm);
+    color: var(--color-text-tertiary);
+    padding: var(--spacing-md) 0;
+}
+
+/* ------------------------------------------------
+   Export Actions (REQ-022)
+   ------------------------------------------------ */
+.taxreturn-export-actions {
+    margin-top: var(--spacing-lg);
+}
+
+/* ------------------------------------------------
+   Responsive — Tax Return at 640px
+   ------------------------------------------------ */
+@media (max-width: 640px) {
+    .taxreturn-form {
+        grid-template-columns: 1fr;
+    }
+
+    .ir3-field-row {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--spacing-xs);
+    }
+
+    .ir3-field-value {
+        text-align: left;
     }
 }

@@ -70,6 +70,17 @@
                     </div>
                 </div>
 
+                <!-- REQ-015: Tax Classification -->
+                <div class="form-group">
+                    <label for="taxClassification">Tax Classification</label>
+                    <span class="help-text">IRD classification for this property</span>
+                    <select id="taxClassification">
+                        <option value="Residential">Residential</option>
+                        <option value="Commercial">Commercial</option>
+                        <option value="MixedUse">Mixed Use</option>
+                    </select>
+                </div>
+
                 <div class="form-row">
                     <!-- Acquisition Date -->
                     <div class="form-group">
@@ -148,6 +159,8 @@
                 document.getElementById('addressLine1').value = prop.addressLine1 || '';
                 document.getElementById('city').value = prop.city || '';
                 document.getElementById('propertyType').value = prop.propertyType || 'House';
+                // REQ-015: Tax classification
+                document.getElementById('taxClassification').value = prop.taxClassification || 'Residential';
                 document.getElementById('ownershipPercentage').value =
                     Math.round(prop.ownershipPercentage * 100);
                 document.getElementById('acquisitionDate').value = prop.acquisitionDate || '';
@@ -200,6 +213,8 @@
                 addressLine1: document.getElementById('addressLine1').value.trim(),
                 city: document.getElementById('city').value.trim(),
                 propertyType: document.getElementById('propertyType').value,
+                // REQ-015: Tax classification
+                taxClassification: document.getElementById('taxClassification').value,
                 ownershipPercentage: parseFloat(document.getElementById('ownershipPercentage').value) / 100,
                 acquisitionDate: document.getElementById('acquisitionDate').value || null,
                 disposalDate: document.getElementById('disposalDate').value || null,

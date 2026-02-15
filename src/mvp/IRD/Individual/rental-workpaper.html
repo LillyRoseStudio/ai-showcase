@@ -31,10 +31,14 @@
                     data-tab="income">Income &amp; Days</button>
             <button role="tab" id="tab-expenses" aria-selected="false" aria-controls="panel-expenses"
                     data-tab="expenses">Expenses</button>
+            <button role="tab" id="tab-adjustments" aria-selected="false" aria-controls="panel-adjustments"
+                    data-tab="adjustments">Adjustments</button>
             <button role="tab" id="tab-results" aria-selected="false" aria-controls="panel-results"
                     data-tab="results">Results</button>
             <button role="tab" id="tab-evidence" aria-selected="false" aria-controls="panel-evidence"
                     data-tab="evidence">Evidence</button>
+            <button role="tab" id="tab-contributors" aria-selected="false" aria-controls="panel-contributors"
+                    data-tab="contributors">Contributors</button>
             <button role="tab" id="tab-activity" aria-selected="false" aria-controls="panel-activity"
                     data-tab="activity">Activity</button>
         </nav>
@@ -57,6 +61,24 @@
                                inputmode="decimal" placeholder="0.00"
                                aria-describedby="grossRentalIncome-help">
                     </div>
+                </div>
+
+                <!-- REQ-014: Other Income -->
+                <div class="form-group">
+                    <label for="otherIncome">Other Income ($)</label>
+                    <span class="help-text">Insurance payouts, other rental-related income</span>
+                    <div class="input-wrapper">
+                        <span class="input-prefix" aria-hidden="true">$</span>
+                        <input type="text" id="otherIncome" class="salary-input"
+                               inputmode="decimal" placeholder="0.00">
+                    </div>
+                </div>
+
+                <!-- REQ-014: Total Income (computed) -->
+                <div class="form-group">
+                    <label id="totalIncome-label">Total Income</label>
+                    <div class="computed-value" id="totalIncomeDisplay"
+                         role="status" aria-labelledby="totalIncome-label">$0.00</div>
                 </div>
 
                 <div class="form-row">
@@ -163,6 +185,41 @@
 
                 <div class="empty-state" id="expenses-empty" hidden>
                     No expense lines added yet.
+                </div>
+            </div>
+        </section>
+
+        <!-- REQ-011: Adjustments -->
+        <section role="tabpanel" id="panel-adjustments" class="tab-panel" aria-labelledby="tab-adjustments">
+            <div class="card">
+                <h2 class="tab-section__title">Adjustments Breakdown</h2>
+                <div class="breakdown" id="adjustments-breakdown">
+                    <dl>
+                        <div class="row" id="adj-capital-exclusion">
+                            <dt>Capital Exclusion</dt>
+                            <dd class="currency-value" id="adj-capitalExcluded">Capital expenses excluded: $0.00</dd>
+                        </div>
+                        <div class="row" id="adj-deductible-base">
+                            <dt>Deductible Expense Base</dt>
+                            <dd class="currency-value" id="adj-deductibleBase">Expenses after capital exclusion: $0.00</dd>
+                        </div>
+                        <div class="row" id="adj-ownership">
+                            <dt>Ownership Adjustment</dt>
+                            <dd class="currency-value" id="adj-ownedExpenses">Ownership: 100% &times; $0.00 = $0.00</dd>
+                        </div>
+                        <div class="row" id="adj-apportionment" hidden>
+                            <dt>Apportionment</dt>
+                            <dd class="currency-value" id="adj-apportioned">Apportionment ratio: 0 days / 0 total days = 0%</dd>
+                        </div>
+                        <div class="row" id="adj-interest">
+                            <dt>Interest Deductibility</dt>
+                            <dd class="currency-value" id="adj-interest-detail">Interest incurred: $0.00, Deductibility rate: 80%, Deductible interest: $0.00</dd>
+                        </div>
+                        <div class="row take-home-row" id="adj-final">
+                            <dt>Final Adjusted Expenses</dt>
+                            <dd class="currency-value" id="adj-finalExpenses">$0.00</dd>
+                        </div>
+                    </dl>
                 </div>
             </div>
         </section>
@@ -278,6 +335,57 @@
             </div>
         </section>
 
+        <!-- REQ-012: Contributors -->
+        <section role="tabpanel" id="panel-contributors" class="tab-panel" aria-labelledby="tab-contributors">
+            <div class="card">
+                <h2 class="tab-section__title">Contributors</h2>
+
+                <!-- Add contributor form -->
+                <div class="contributor-form" id="contributor-add-form">
+                    <div class="form-group">
+                        <label for="contrib-userId">User ID</label>
+                        <input type="text" id="contrib-userId" placeholder="user-id">
+                    </div>
+                    <div class="form-group">
+                        <label for="contrib-role">Role</label>
+                        <select id="contrib-role">
+                            <option value="Preparer">Preparer</option>
+                            <option value="Reviewer">Reviewer</option>
+                            <option value="Approver">Approver</option>
+                            <option value="Contributor">Contributor</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="sr-only">Add contributor</label>
+                        <button type="button" id="btn-add-contributor" class="btn-primary--compact btn-small"
+                                aria-label="Add contributor">Add</button>
+                    </div>
+                </div>
+
+                <!-- Contributors table -->
+                <div class="contributors-table-wrapper">
+                    <table class="contributors-table" id="contributors-table">
+                        <thead>
+                            <tr>
+                                <th scope="col">Name</th>
+                                <th scope="col">Role</th>
+                                <th scope="col" class="checkbox-cell">Owner</th>
+                                <th scope="col">Last Activity</th>
+                                <th scope="col" class="actions-cell">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="contributors-tbody">
+                            <!-- Rendered by JS -->
+                        </tbody>
+                    </table>
+                </div>
+
+                <div class="empty-state" id="contributors-empty" hidden>
+                    No contributors assigned yet.
+                </div>
+            </div>
+        </section>
+
         <!-- REQ-006: Activity -->
         <section role="tabpanel" id="panel-activity" class="tab-panel" aria-labelledby="tab-activity">
             <div class="card">
@@ -336,6 +444,7 @@
             bindIncomeInputs();
             bindExpenseForm();
             bindEvidenceForm();
+            bindContributorForm();
 
             // Initial render
             renderAll();
@@ -381,7 +490,8 @@
            Income & Days Inputs (REQ-003, REQ-007)
            ------------------------------------------------ */
         function bindIncomeInputs() {
-            var fields = ['grossRentalIncome', 'daysRented', 'daysAvailable', 'daysPrivate'];
+            // REQ-014: Added otherIncome to tracked fields
+            var fields = ['grossRentalIncome', 'otherIncome', 'daysRented', 'daysAvailable', 'daysPrivate'];
             fields.forEach(function (f) {
                 var el = document.getElementById(f);
                 if (el) {
@@ -412,6 +522,15 @@
                     String(oldGross), String(newGross));
             }
 
+            // REQ-014: Other income tracking
+            var otherVal = document.getElementById('otherIncome').value.replace(/[^0-9.]/g, '');
+            var oldOther = workpaper.otherIncome;
+            var newOther = parseFloat(otherVal) || 0;
+            if (oldOther !== newOther) {
+                logActivity(workpaper.workpaperId, 'FieldChange', 'otherIncome',
+                    String(oldOther), String(newOther));
+            }
+
             var daysRented = parseInt(document.getElementById('daysRented').value, 10) || 0;
             if (workpaper.daysRented !== daysRented) {
                 logActivity(workpaper.workpaperId, 'FieldChange', 'daysRented',
@@ -429,6 +548,7 @@
 
             updateWorkpaper(workpaper.workpaperId, {
                 grossRentalIncome: newGross,
+                otherIncome: newOther,
                 daysRented: daysRented,
                 daysAvailable: daysAvailable,
                 daysPrivate: daysPrivate,
@@ -441,6 +561,9 @@
             if (!workpaper) return;
             document.getElementById('grossRentalIncome').value =
                 workpaper.grossRentalIncome ? workpaper.grossRentalIncome.toFixed(2) : '';
+            // REQ-014: Other income
+            document.getElementById('otherIncome').value =
+                workpaper.otherIncome ? workpaper.otherIncome.toFixed(2) : '';
             document.getElementById('daysRented').value = workpaper.daysRented || '';
             document.getElementById('daysAvailable').value = workpaper.daysAvailable || '';
             document.getElementById('daysPrivate').value = workpaper.daysPrivate || '';
@@ -615,6 +738,132 @@
         }
 
         /* ------------------------------------------------
+           Adjustments Breakdown (REQ-011)
+           ------------------------------------------------ */
+        function renderAdjustments() {
+            if (!workpaper || !property) return;
+
+            var settings = loadSettings();
+            var ownershipPct = property.ownershipPercentage || 1.0;
+            var ownershipPctDisplay = Math.round(ownershipPct * 100);
+
+            // Capital exclusion
+            document.getElementById('adj-capitalExcluded').textContent =
+                'Capital expenses excluded: ' + formatCurrency(workpaper.capitalExcludedTotal || 0);
+
+            // Deductible expense base
+            document.getElementById('adj-deductibleBase').textContent =
+                'Expenses after capital exclusion: ' + formatCurrency(workpaper.deductibleExpenseBase || 0);
+
+            // Ownership adjustment
+            document.getElementById('adj-ownedExpenses').textContent =
+                'Ownership: ' + ownershipPctDisplay + '% \u00D7 ' +
+                formatCurrency(workpaper.deductibleExpenseBase || 0) + ' = ' +
+                formatCurrency(workpaper.ownedExpenses || 0);
+
+            // Apportionment (shown only if mixed use)
+            var apportionmentRow = document.getElementById('adj-apportionment');
+            if (workpaper.mixedUse) {
+                apportionmentRow.hidden = false;
+                var daysRented = parseInt(workpaper.daysRented, 10) || 0;
+                var daysPrivate = parseInt(workpaper.daysPrivate, 10) || 0;
+                var totalDays = daysRented + daysPrivate;
+                var ratio = totalDays > 0 ? ((daysRented / totalDays) * 100).toFixed(1) : '0.0';
+                document.getElementById('adj-apportioned').textContent =
+                    'Apportionment ratio: ' + daysRented + ' days / ' + totalDays +
+                    ' total days = ' + ratio + '% — Apportioned expenses: ' +
+                    formatCurrency(workpaper.apportionedExpenses || 0);
+            } else {
+                apportionmentRow.hidden = true;
+            }
+
+            // Interest deductibility
+            var deductibilityRate = Math.round((settings.interestDeductibilityRate || 0.80) * 100);
+            document.getElementById('adj-interest-detail').textContent =
+                'Interest incurred: ' + formatCurrency(workpaper.interestTotal || 0) +
+                ', Deductibility rate: ' + deductibilityRate + '%, Deductible interest: ' +
+                formatCurrency(workpaper.deductibleInterest || 0);
+
+            // Final adjusted expenses
+            document.getElementById('adj-finalExpenses').textContent =
+                formatCurrency(workpaper.adjustedDeductibleExpenses || 0);
+        }
+
+        // REQ-014: Update total income display
+        function updateTotalIncomeDisplay() {
+            if (!workpaper) return;
+            var total = parseFloat(workpaper.totalIncome) || 0;
+            document.getElementById('totalIncomeDisplay').textContent = formatCurrency(total);
+        }
+
+        /* ------------------------------------------------
+           Contributors (REQ-012)
+           ------------------------------------------------ */
+        function bindContributorForm() {
+            document.getElementById('btn-add-contributor').addEventListener('click', function () {
+                var userId = document.getElementById('contrib-userId').value.trim();
+                var role = document.getElementById('contrib-role').value;
+                if (!userId) return;
+
+                addContributor(workpaper.workpaperId, userId, role);
+                logActivity(workpaper.workpaperId, 'AddedContributor', 'contributor', null,
+                    userId + ' (' + role + ')');
+                document.getElementById('contrib-userId').value = '';
+                renderContributors();
+                renderActivity();
+            });
+        }
+
+        function renderContributors() {
+            if (!workpaper) return;
+            var contributors = getContributorsForWorkpaper(workpaper.workpaperId);
+            var tbody = document.getElementById('contributors-tbody');
+            var emptyEl = document.getElementById('contributors-empty');
+            var tableEl = document.getElementById('contributors-table');
+
+            if (contributors.length === 0) {
+                tbody.innerHTML = '';
+                emptyEl.hidden = false;
+                tableEl.hidden = true;
+                return;
+            }
+            emptyEl.hidden = true;
+            tableEl.hidden = false;
+
+            var html = '';
+            contributors.forEach(function (c) {
+                var ownerBadge = c.isCurrentOwner
+                    ? '<span class="status-badge status-badge--Complete">Owner</span>'
+                    : '';
+                html += '<tr>' +
+                    '<td>' + escapeHtml(c.userId) + '</td>' +
+                    '<td>' + escapeHtml(c.role) + '</td>' +
+                    '<td class="checkbox-cell">' + ownerBadge + '</td>' +
+                    '<td>' + formatDate(c.lastActivityAt) + '</td>' +
+                    '<td class="actions-cell">' +
+                        '<button type="button" class="btn-primary--compact btn-small" ' +
+                            'data-assign-owner="' + c.contributorId + '" ' +
+                            'aria-label="Assign ' + escapeHtml(c.userId) + ' as owner"' +
+                            (c.isCurrentOwner ? ' disabled' : '') + '>' +
+                            'Set Owner' +
+                        '</button>' +
+                    '</td>' +
+                '</tr>';
+            });
+            tbody.innerHTML = html;
+
+            // Bind assign owner buttons
+            tbody.querySelectorAll('[data-assign-owner]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var contributorId = btn.getAttribute('data-assign-owner');
+                    assignOwner(workpaper.workpaperId, contributorId);
+                    logActivity(workpaper.workpaperId, 'AssignedOwner', 'contributor', null, contributorId);
+                    renderContributors();
+                });
+            });
+        }
+
+        /* ------------------------------------------------
            Evidence (REQ-009)
            ------------------------------------------------ */
         function bindEvidenceForm() {
@@ -756,9 +1005,13 @@
             calculateWorkpaper(workpaper.workpaperId);
             workpaper = getWorkpaperById(workpaper.workpaperId);
             renderResults();
+            // REQ-011: Render adjustments breakdown
+            renderAdjustments();
             renderExpenses();
             renderDiagnostics();
             renderActivity();
+            // REQ-014: Update total income display
+            updateTotalIncomeDisplay();
         }
 
         function renderAll() {
@@ -766,6 +1019,8 @@
             populateIncomeFields();
             recalculate();
             renderEvidence();
+            // REQ-012: Render contributors
+            renderContributors();
         }
 
         /* ------------------------------------------------

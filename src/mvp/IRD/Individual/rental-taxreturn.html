@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tax Return — Rental Property</title>
+    <!-- REQ-017: Reuse shared design system -->
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="stylesheet" href="rental-styles.css">
+</head>
+<body>
+    <main class="rental-container">
+        <!-- REQ-017: Back to portfolio -->
+        <a href="rental-property.html" class="back-link">Back to Portfolio</a>
+
+        <!-- REQ-017: Page header with tax year and status -->
+        <header class="page-header">
+            <h1>Tax Return</h1>
+            <div class="page-header-actions">
+                <span class="tax-year-badge" id="tax-year-badge" aria-label="Tax year"></span>
+                <span class="status-badge" id="header-status-badge" hidden aria-label="Tax return status"></span>
+            </div>
+        </header>
+
+        <!-- REQ-017: Generation Form -->
+        <section class="card" id="generation-section" aria-label="Generate tax return">
+            <h2 class="tab-section__title">Generate Tax Return</h2>
+            <div class="taxreturn-form">
+                <div class="form-group">
+                    <label for="tr-taxYear">Tax Year</label>
+                    <input type="text" id="tr-taxYear" readonly aria-readonly="true">
+                </div>
+                <div class="form-group">
+                    <label for="tr-jurisdiction">Jurisdiction</label>
+                    <select id="tr-jurisdiction" aria-describedby="tr-jurisdiction-help">
+                        <option value="NZ-IRD">NZ-IRD</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="tr-priorLoss">Prior Year Residential Loss Used ($)</label>
+                    <span class="help-text" id="tr-priorLoss-help">Excess deductions brought forward from previous year</span>
+                    <div class="input-wrapper">
+                        <span class="input-prefix" aria-hidden="true">$</span>
+                        <input type="text" id="tr-priorLoss" class="salary-input"
+                               inputmode="decimal" placeholder="0.00" value="0.00"
+                               aria-describedby="tr-priorLoss-help">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="tr-interestReason">Interest Limitation Reason</label>
+                    <span class="help-text" id="tr-interestReason-help">Reason for interest deduction claim</span>
+                    <input type="text" id="tr-interestReason" placeholder="e.g. New build exemption"
+                           aria-describedby="tr-interestReason-help">
+                </div>
+            </div>
+            <button type="button" id="btn-generate" class="btn-primary--compact">
+                Generate Tax Return
+            </button>
+        </section>
+
+        <!-- REQ-019: IR3 Return Fields (hidden until generated) -->
+        <section class="card" id="ir3-fields-section" hidden aria-label="IR3 return fields">
+            <h2 class="tab-section__title">IR3 Return Fields</h2>
+
+            <h3 class="ir3-section-heading">Residential Rental (Q22)</h3>
+            <div class="ir3-fields" id="ir3-q22-fields" role="list" aria-label="IR3 Q22 residential rental fields">
+                <!-- Rendered by JS -->
+            </div>
+
+            <h3 class="ir3-section-heading">Interest Disclosure (Q23)</h3>
+            <div class="ir3-fields" id="ir3-q23-fields" role="list" aria-label="IR3 Q23 interest disclosure fields">
+                <!-- Rendered by JS -->
+            </div>
+
+            <h3 class="ir3-section-heading">Non-Residential Rental (Q24)</h3>
+            <div class="ir3-fields" id="ir3-q24-fields" role="list" aria-label="IR3 Q24 non-residential rental fields">
+                <!-- Rendered by JS -->
+            </div>
+        </section>
+
+        <!-- REQ-020: IR3R Per-Property Schedule (hidden until generated) -->
+        <section class="card" id="schedule-section" hidden aria-label="IR3R per-property schedule">
+            <h2 class="tab-section__title">IR3R Per-Property Schedule</h2>
+            <div class="schedule-table-wrapper">
+                <table class="schedule-table" id="schedule-table" aria-label="Per-property rental schedule">
+                    <thead>
+                        <tr>
+                            <th scope="col">Property</th>
+                            <th scope="col" class="amount-cell">Rents (B1)</th>
+                            <th scope="col" class="amount-cell">Other (B2)</th>
+                            <th scope="col" class="amount-cell">Total (B4)</th>
+                            <th scope="col" class="amount-cell">Int. Incurred (B7A)</th>
+                            <th scope="col" class="amount-cell">Int. Claimed (B7B)</th>
+                            <th scope="col">Int. Reason (B7C)</th>
+                            <th scope="col" class="amount-cell">Expenses (B14)</th>
+                            <th scope="col" class="amount-cell">Net (B15)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="schedule-tbody">
+                        <!-- Rendered by JS -->
+                    </tbody>
+                    <tfoot id="schedule-tfoot">
+                        <!-- Rendered by JS -->
+                    </tfoot>
+                </table>
+            </div>
+        </section>
+
+        <!-- REQ-023: Validation Panel -->
+        <section class="card" id="validation-section" aria-label="Validation">
+            <h2 class="tab-section__title">Validation</h2>
+            <button type="button" id="btn-validate" class="btn-secondary btn-small" disabled
+                    aria-describedby="validation-empty">
+                Run Validation
+            </button>
+            <div class="validation-panel" id="validation-panel" aria-live="polite">
+                <p class="validation-empty" id="validation-empty">Generate a tax return to run validation.</p>
+                <div class="validation-list" id="validation-list" hidden>
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+        </section>
+
+        <!-- REQ-017: Status & Actions -->
+        <section class="card" id="status-section" hidden aria-label="Status and actions">
+            <h2 class="tab-section__title">Status &amp; Actions</h2>
+            <div class="status-actions" id="status-actions">
+                <span class="status-actions__current">
+                    Current Status: <span class="status-badge" id="status-badge" aria-label="Current status"></span>
+                </span>
+                <div class="btn-group" id="status-buttons">
+                    <!-- Rendered by JS -->
+                </div>
+            </div>
+            <!-- REQ-022: Export JSON -->
+            <div class="taxreturn-export-actions">
+                <button type="button" id="btn-export" class="btn-secondary" aria-label="Export tax return as JSON">
+                    Export JSON
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <script src="rental-app.js"></script>
+    <script>
+        /* ================================================
+           Tax Return Page — Controller
+           REQ-017, REQ-019, REQ-020, REQ-022, REQ-023,
+           REQ-024, REQ-025, REQ-026, REQ-027
+           ================================================ */
+
+        'use strict';
+
+        var currentTaxReturn = null;
+
+        /* ------------------------------------------------
+           Initialization
+           ------------------------------------------------ */
+        function init() {
+            var settings = loadSettings();
+            document.getElementById('tax-year-badge').textContent = 'Tax Year: ' + settings.taxYear;
+            document.getElementById('tr-taxYear').value = settings.taxYear;
+
+            // Bind events
+            document.getElementById('btn-generate').addEventListener('click', handleGenerate);
+            document.getElementById('btn-validate').addEventListener('click', handleValidation);
+            document.getElementById('btn-export').addEventListener('click', handleExport);
+
+            // Load existing tax return for current tax year if available
+            var existing = loadTaxReturns().filter(function (tr) {
+                return tr.taxYear === settings.taxYear;
+            });
+            if (existing.length > 0) {
+                currentTaxReturn = existing[existing.length - 1];
+                renderAll();
+            }
+        }
+
+        /* ------------------------------------------------
+           Generate Tax Return (REQ-025)
+           ------------------------------------------------ */
+        function handleGenerate() {
+            var taxYear = document.getElementById('tr-taxYear').value;
+            var jurisdiction = document.getElementById('tr-jurisdiction').value;
+            var priorLossRaw = document.getElementById('tr-priorLoss').value.replace(/[^0-9.]/g, '');
+            var priorLoss = parseFloat(priorLossRaw) || 0;
+            var interestReason = document.getElementById('tr-interestReason').value.trim();
+
+            var request = {
+                taxYear: taxYear,
+                jurisdiction: jurisdiction,
+                inputs: {
+                    rental: {
+                        priorYearResidentialLossUsed: priorLoss,
+                        interestReasonSelection: interestReason
+                    }
+                }
+            };
+
+            var result = generateTaxReturnApi(request);
+            if (result.error) {
+                alert('Error: ' + result.error);
+                return;
+            }
+
+            currentTaxReturn = getTaxReturnById(result.taxReturnId);
+            renderAll();
+        }
+
+        /* ------------------------------------------------
+           Render All Sections
+           ------------------------------------------------ */
+        function renderAll() {
+            if (!currentTaxReturn) return;
+
+            var rental = currentTaxReturn.sections.rental;
+
+            // Show sections
+            document.getElementById('ir3-fields-section').hidden = false;
+            document.getElementById('schedule-section').hidden = false;
+            document.getElementById('status-section').hidden = false;
+            document.getElementById('btn-validate').disabled = false;
+
+            renderIR3Fields(rental.fields);
+            renderSchedule(rental.schedule);
+            renderValidation(currentTaxReturn.validation || { blocking: [], warnings: [] });
+            renderStatus();
+        }
+
+        /* ------------------------------------------------
+           IR3 Field Display (REQ-019)
+           ------------------------------------------------ */
+        function renderIR3Fields(fields) {
+            // Q22 — Residential rental
+            var q22Defs = [
+                { key: 'IR3.Q22.A', label: 'Gross residential rental income' },
+                { key: 'IR3.Q22.C', label: 'Other residential income' },
+                { key: 'IR3.Q22.D', label: 'Total residential income' },
+                { key: 'IR3.Q22.E', label: 'Residential rental deductions' },
+                { key: 'IR3.Q22.F', label: 'Excess deductions brought forward' },
+                { key: 'IR3.Q22.G', label: 'Deductions claimed this year' },
+                { key: 'IR3.Q22.H', label: 'Net residential income' },
+                { key: 'IR3.Q22.I', label: 'Excess deductions to carry forward' }
+            ];
+            document.getElementById('ir3-q22-fields').innerHTML = renderFieldRows(q22Defs, fields, false);
+
+            // Q23 — Interest disclosure
+            var q23Defs = [
+                { key: 'IR3.Q23.A', label: 'Total interest incurred' },
+                { key: 'IR3.Q23.B', label: 'Interest claimed' },
+                { key: 'IR3.Q23.C', label: 'Interest reason', isText: true }
+            ];
+            document.getElementById('ir3-q23-fields').innerHTML = renderFieldRows(q23Defs, fields, false);
+
+            // Q24 — Non-residential rental
+            var q24Defs = [
+                { key: 'IR3.Q24', label: 'Net rents' }
+            ];
+            document.getElementById('ir3-q24-fields').innerHTML = renderFieldRows(q24Defs, fields, false);
+        }
+
+        function renderFieldRows(defs, fields, escaped) {
+            var html = '';
+            defs.forEach(function (def) {
+                var val = fields[def.key];
+                var displayVal;
+                if (def.isText) {
+                    displayVal = escapeHtml(val || '\u2014');
+                } else {
+                    displayVal = typeof val === 'number' ? formatCurrency(val) : '\u2014';
+                }
+                html += '<div class="ir3-field-row" role="listitem">' +
+                    '<span class="ir3-field-key">' + escapeHtml(def.key) + '</span>' +
+                    '<span class="ir3-field-label">' + escapeHtml(def.label) + '</span>' +
+                    '<span class="ir3-field-value">' + displayVal + '</span>' +
+                '</div>';
+            });
+            return html;
+        }
+
+        /* ------------------------------------------------
+           IR3R Per-Property Schedule (REQ-020)
+           ------------------------------------------------ */
+        function renderSchedule(schedule) {
+            var tbody = document.getElementById('schedule-tbody');
+            var tfoot = document.getElementById('schedule-tfoot');
+
+            if (!schedule || schedule.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="9" class="empty-state">No properties in schedule</td></tr>';
+                tfoot.innerHTML = '';
+                return;
+            }
+
+            var totals = { b1: 0, b2: 0, b4: 0, b7a: 0, b7b: 0, b14: 0, b15: 0 };
+            var html = '';
+
+            schedule.forEach(function (entry) {
+                var prop = getPropertyById(entry.propertyId);
+                var name = prop ? prop.displayName : entry.propertyId;
+                var f = entry.fields;
+
+                totals.b1 += (f['IR3R.B1'] || 0);
+                totals.b2 += (f['IR3R.B2'] || 0);
+                totals.b4 += (f['IR3R.B4'] || 0);
+                totals.b7a += (f['IR3R.B7A'] || 0);
+                totals.b7b += (f['IR3R.B7B'] || 0);
+                totals.b14 += (f['IR3R.B14'] || 0);
+                totals.b15 += (f['IR3R.B15'] || 0);
+
+                html += '<tr>' +
+                    '<td>' + escapeHtml(name) + '</td>' +
+                    '<td class="amount-cell">' + formatCurrency(f['IR3R.B1'] || 0) + '</td>' +
+                    '<td class="amount-cell">' + formatCurrency(f['IR3R.B2'] || 0) + '</td>' +
+                    '<td class="amount-cell">' + formatCurrency(f['IR3R.B4'] || 0) + '</td>' +
+                    '<td class="amount-cell">' + formatCurrency(f['IR3R.B7A'] || 0) + '</td>' +
+                    '<td class="amount-cell">' + formatCurrency(f['IR3R.B7B'] || 0) + '</td>' +
+                    '<td>' + escapeHtml(f['IR3R.B7C'] || '') + '</td>' +
+                    '<td class="amount-cell">' + formatCurrency(f['IR3R.B14'] || 0) + '</td>' +
+                    '<td class="amount-cell">' + formatCurrency(f['IR3R.B15'] || 0) + '</td>' +
+                '</tr>';
+            });
+            tbody.innerHTML = html;
+
+            tfoot.innerHTML = '<tr class="schedule-total-row">' +
+                '<td><strong>Totals</strong></td>' +
+                '<td class="amount-cell">' + formatCurrency(totals.b1) + '</td>' +
+                '<td class="amount-cell">' + formatCurrency(totals.b2) + '</td>' +
+                '<td class="amount-cell">' + formatCurrency(totals.b4) + '</td>' +
+                '<td class="amount-cell">' + formatCurrency(totals.b7a) + '</td>' +
+                '<td class="amount-cell">' + formatCurrency(totals.b7b) + '</td>' +
+                '<td></td>' +
+                '<td class="amount-cell">' + formatCurrency(totals.b14) + '</td>' +
+                '<td class="amount-cell">' + formatCurrency(totals.b15) + '</td>' +
+            '</tr>';
+        }
+
+        /* ------------------------------------------------
+           Validation Panel (REQ-023)
+           ------------------------------------------------ */
+        function renderValidation(validation) {
+            var listEl = document.getElementById('validation-list');
+            var emptyEl = document.getElementById('validation-empty');
+
+            var items = [];
+            if (validation.blocking) {
+                validation.blocking.forEach(function (msg) {
+                    items.push({ level: 'blocking', message: msg });
+                });
+            }
+            if (validation.warnings) {
+                validation.warnings.forEach(function (msg) {
+                    items.push({ level: 'warning', message: msg });
+                });
+            }
+
+            if (items.length === 0) {
+                listEl.hidden = true;
+                emptyEl.textContent = 'No validation issues';
+                emptyEl.hidden = false;
+                return;
+            }
+
+            emptyEl.hidden = true;
+            listEl.hidden = false;
+
+            var html = '';
+            items.forEach(function (item) {
+                var levelLabel = item.level.charAt(0).toUpperCase() + item.level.slice(1);
+                html += '<div class="validation-item validation-item--' + item.level + '" role="alert">' +
+                    '<span class="diag-badge diag-badge--' + item.level + '">' + levelLabel + '</span>' +
+                    '<span>' + escapeHtml(item.message) + '</span>' +
+                '</div>';
+            });
+            listEl.innerHTML = html;
+        }
+
+        /* ------------------------------------------------
+           Status & Actions (REQ-017)
+           ------------------------------------------------ */
+        function renderStatus() {
+            if (!currentTaxReturn) return;
+
+            var statusLabel = currentTaxReturn.status.replace(/([A-Z])/g, ' $1').trim();
+
+            // Status badges
+            var badge = document.getElementById('status-badge');
+            badge.textContent = statusLabel;
+            badge.className = 'status-badge status-badge--' + currentTaxReturn.status;
+
+            var headerBadge = document.getElementById('header-status-badge');
+            headerBadge.textContent = statusLabel;
+            headerBadge.className = 'status-badge status-badge--' + currentTaxReturn.status;
+            headerBadge.hidden = false;
+
+            // Status transition buttons
+            var btnsContainer = document.getElementById('status-buttons');
+            var html = '';
+            var currentIdx = TAX_RETURN_STATUS_ORDER.indexOf(currentTaxReturn.status);
+
+            // Forward transition
+            if (currentIdx < TAX_RETURN_STATUS_ORDER.length - 1) {
+                var nextStatus = TAX_RETURN_STATUS_ORDER[currentIdx + 1];
+                var nextLabel = nextStatus.replace(/([A-Z])/g, ' $1').trim();
+
+                if (nextStatus === 'Locked') {
+                    html += '<button type="button" class="btn-primary--compact btn-small" ' +
+                        'data-transition="Locked" aria-label="Lock tax return">Lock Tax Return</button>';
+                } else {
+                    html += '<button type="button" class="btn-primary--compact btn-small" ' +
+                        'data-transition="' + nextStatus + '" aria-label="Move to ' + nextLabel + '">' +
+                        'Move to ' + nextLabel + '</button>';
+                }
+            }
+
+            // Back to Draft from ReadyToReview
+            if (currentTaxReturn.status === 'ReadyToReview') {
+                html += '<button type="button" class="btn-secondary btn-small" ' +
+                    'data-transition="Draft" aria-label="Back to Draft">Back to Draft</button>';
+            }
+
+            btnsContainer.innerHTML = html;
+
+            // Bind transition buttons
+            btnsContainer.querySelectorAll('[data-transition]').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    var newStatus = btn.getAttribute('data-transition');
+                    handleStatusTransition(newStatus);
+                });
+            });
+        }
+
+        /* ------------------------------------------------
+           Event Handlers
+           ------------------------------------------------ */
+
+        // REQ-026: Run validation
+        function handleValidation() {
+            if (!currentTaxReturn) return;
+            var validation = validateTaxReturnApi(currentTaxReturn.taxReturnId);
+            if (validation.error) {
+                alert('Error: ' + validation.error);
+                return;
+            }
+            currentTaxReturn = getTaxReturnById(currentTaxReturn.taxReturnId);
+            renderValidation(validation);
+        }
+
+        // REQ-017: Status transition
+        function handleStatusTransition(newStatus) {
+            if (!currentTaxReturn) return;
+
+            if (newStatus === 'Locked') {
+                // REQ-027: Lock requires Complete status and no blocking issues
+                var result = lockTaxReturnApi(currentTaxReturn.taxReturnId);
+                if (result.error) {
+                    alert(result.error);
+                    if (result.validation) {
+                        renderValidation(result.validation);
+                    }
+                    return;
+                }
+                currentTaxReturn = getTaxReturnById(currentTaxReturn.taxReturnId);
+            } else {
+                var transitioned = transitionTaxReturnStatus(currentTaxReturn.taxReturnId, newStatus);
+                if (!transitioned) {
+                    alert('Cannot transition to ' + newStatus);
+                    return;
+                }
+                currentTaxReturn = transitioned;
+            }
+            renderStatus();
+        }
+
+        // REQ-022: Export JSON
+        function handleExport() {
+            if (!currentTaxReturn) return;
+            var json = JSON.stringify(currentTaxReturn, null, 2);
+            var blob = new Blob([json], { type: 'application/json' });
+            var url = URL.createObjectURL(blob);
+            var a = document.createElement('a');
+            a.href = url;
+            a.download = 'tax-return-' + currentTaxReturn.taxYear.replace('/', '-') + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+
+        /* ------------------------------------------------
+           Utilities
+           ------------------------------------------------ */
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.appendChild(document.createTextNode(str || ''));
+            return div.innerHTML;
+        }
+
+        /* ------------------------------------------------
+           Bootstrap
+           ------------------------------------------------ */
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>

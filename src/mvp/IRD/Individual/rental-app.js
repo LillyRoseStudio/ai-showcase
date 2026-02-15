@@ -48,15 +48,20 @@ var STATUS_ORDER = Object.freeze([
     'Locked'
 ]);
 
+// REQ-015: Tax classification options
+var TAX_CLASSIFICATIONS = Object.freeze(['Residential', 'Commercial', 'MixedUse']);
+
 /* ------------------------------------------------
    LocalStorage Keys
    ------------------------------------------------ */
 var STORAGE_KEYS = Object.freeze({
-    properties: 'rental_properties',
-    workpapers: 'rental_workpapers',
-    activities: 'rental_activities',
-    evidence:   'rental_evidence',
-    settings:   'rental_settings'
+    properties:   'rental_properties',
+    workpapers:   'rental_workpapers',
+    activities:   'rental_activities',
+    evidence:     'rental_evidence',
+    settings:     'rental_settings',
+    contributors: 'rental_contributors',
+    taxreturns:   'rental_taxreturns'
 });
 
 /* ------------------------------------------------
@@ -164,6 +169,8 @@ function createProperty(data) {
         addressLine1: data.addressLine1 || '',
         city: data.city || '',
         propertyType: data.propertyType || 'House',
+        // REQ-015: Tax classification
+        taxClassification: data.taxClassification || 'Residential',
         ownershipPercentage: parseFloat(data.ownershipPercentage) || 1.0,
         acquisitionDate: data.acquisitionDate || null,
         disposalDate: data.disposalDate || null,
@@ -236,6 +243,9 @@ function createWorkpaper(propertyId) {
         taxYear: settings.taxYear,
         status: 'NotStarted',
         grossRentalIncome: 0,
+        // REQ-014: Other income
+        otherIncome: 0,
+        totalIncome: 0,
         daysRented: 0,
         daysAvailable: 0,
         daysPrivate: 0,
@@ -247,6 +257,9 @@ function createWorkpaper(propertyId) {
         // Calculated fields
         totalExpenses: 0,
         capitalExcludedTotal: 0,
+        // REQ-013: Capital expenditure tracking
+        hasCapitalExpenditure: false,
+        capitalExpenditureTotal: 0,
         deductibleExpenseBase: 0,
         ownedExpenses: 0,
         apportionedExpenses: 0,
@@ -259,6 +272,11 @@ function createWorkpaper(propertyId) {
     };
     wps.push(wp);
     saveWorkpapers(wps);
+    // REQ-012: Auto-add default user as contributor with Preparer role
+    var contributor = addContributor(wp.workpaperId, DEFAULT_USER.userId, 'Preparer');
+    if (contributor) {
+        assignOwner(wp.workpaperId, contributor.contributorId);
+    }
     logActivity(wp.workpaperId, 'Created', 'status', null, 'NotStarted');
     return wp;
 }
@@ -380,6 +398,84 @@ function removeEvidence(evidenceId) {
 }
 
 /* ------------------------------------------------
+   Contributors CRUD (REQ-012)
+   ------------------------------------------------ */
+function loadContributors() {
+    return _load(STORAGE_KEYS.contributors);
+}
+
+function saveContributors(contributors) {
+    _save(STORAGE_KEYS.contributors, contributors);
+}
+
+function getContributorsForWorkpaper(workpaperId) {
+    return loadContributors().filter(function (c) {
+        return c.workpaperId === workpaperId;
+    });
+}
+
+// Implements REQ-012: Add a contributor to a workpaper
+function addContributor(workpaperId, userId, role) {
+    var contributors = loadContributors();
+    // Don't duplicate active contributors
+    var existing = contributors.find(function (c) {
+        return c.workpaperId === workpaperId && c.userId === userId && c.isActive;
+    });
+    if (existing) return existing;
+
+    var contributor = {
+        contributorId: crypto.randomUUID(),
+        workpaperId: workpaperId,
+        userId: userId,
+        role: role || 'Contributor',
+        firstActivityAt: new Date().toISOString(),
+        lastActivityAt: new Date().toISOString(),
+        isCurrentOwner: false,
+        isActive: true
+    };
+    contributors.push(contributor);
+    saveContributors(contributors);
+    return contributor;
+}
+
+// Implements REQ-012: Assign ownership of a workpaper to a contributor
+function assignOwner(workpaperId, contributorId) {
+    var contributors = loadContributors();
+    contributors.forEach(function (c) {
+        if (c.workpaperId === workpaperId) {
+            c.isCurrentOwner = (c.contributorId === contributorId);
+        }
+    });
+    saveContributors(contributors);
+}
+
+// Implements REQ-012: Update contributor role
+function updateContributorRole(contributorId, newRole) {
+    var contributors = loadContributors();
+    var contributor = contributors.find(function (c) {
+        return c.contributorId === contributorId;
+    });
+    if (!contributor) return null;
+    contributor.role = newRole;
+    saveContributors(contributors);
+    return contributor;
+}
+
+// Implements REQ-012: Ensure contributor exists, update lastActivityAt
+function ensureContributor(workpaperId, userId) {
+    var contributors = loadContributors();
+    var existing = contributors.find(function (c) {
+        return c.workpaperId === workpaperId && c.userId === userId && c.isActive;
+    });
+    if (existing) {
+        existing.lastActivityAt = new Date().toISOString();
+        saveContributors(contributors);
+        return existing;
+    }
+    return addContributor(workpaperId, userId, 'Contributor');
+}
+
+/* ------------------------------------------------
    Activity Logging (REQ-006)
    ------------------------------------------------ */
 function loadActivities() {
@@ -404,6 +500,8 @@ function logActivity(workpaperId, actionType, fieldName, oldValue, newValue) {
     };
     activities.push(entry);
     saveActivities(activities);
+    // REQ-012: Ensure contributor exists and update activity timestamp
+    ensureContributor(workpaperId, entry.userId);
     return entry;
 }
 
@@ -438,6 +536,10 @@ function calculateWorkpaper(workpaperId) {
         return sum + (l.isCapital ? (parseFloat(l.amount) || 0) : 0);
     }, 0);
 
+    // REQ-013: Capital expenditure tracking
+    var hasCapitalExpenditure = capitalExcludedTotal > 0;
+    var capitalExpenditureTotal = capitalExcludedTotal;
+
     // DeductibleExpenseBase = TotalExpenses - CapitalExcludedTotal
     var deductibleExpenseBase = totalExpenses - capitalExcludedTotal;
 
@@ -467,8 +569,11 @@ function calculateWorkpaper(workpaperId) {
     // AdjustedExpenses = (ApportionedExpenses - InterestTotal) + DeductibleInterest
     var adjustedDeductibleExpenses = (apportionedExpenses - interestTotal) + deductibleInterest;
 
-    // AdjustedIncome = grossRentalIncome * ownershipPercentage
-    var adjustedIncome = (parseFloat(wp.grossRentalIncome) || 0) * ownershipPct;
+    // REQ-014: Total income includes other income
+    var totalIncome = (parseFloat(wp.grossRentalIncome) || 0) + (parseFloat(wp.otherIncome) || 0);
+
+    // AdjustedIncome = totalIncome * ownershipPercentage
+    var adjustedIncome = totalIncome * ownershipPct;
 
     // NetRentalIncome = AdjustedIncome - AdjustedExpenses
     var netRentalIncome = adjustedIncome - adjustedDeductibleExpenses;
@@ -479,12 +584,17 @@ function calculateWorkpaper(workpaperId) {
     var calculated = {
         totalExpenses: totalExpenses,
         capitalExcludedTotal: capitalExcludedTotal,
+        // REQ-013: Capital expenditure tracking
+        hasCapitalExpenditure: hasCapitalExpenditure,
+        capitalExpenditureTotal: capitalExpenditureTotal,
         deductibleExpenseBase: deductibleExpenseBase,
         ownedExpenses: ownedExpenses,
         apportionedExpenses: apportionedExpenses,
         interestTotal: interestTotal,
         deductibleInterest: deductibleInterest,
         adjustedDeductibleExpenses: adjustedDeductibleExpenses,
+        // REQ-014: Total income
+        totalIncome: totalIncome,
         adjustedIncome: adjustedIncome,
         netRentalIncome: netRentalIncome,
         lossCarryForward: lossCarryForward
@@ -678,4 +788,348 @@ function getPropertySummary(propertyId) {
         netRentalIncome: wp ? wp.netRentalIncome : 0,
         status: wp ? wp.status : 'NotStarted'
     };
+}
+
+/* ================================================
+   Domain Output — RentalSummary (REQ-016)
+   ================================================ */
+
+// Implements REQ-016: Generate RentalSummary for a single workpaper
+function generateRentalSummary(workpaperId) {
+    var wp = getWorkpaperById(workpaperId);
+    if (!wp) return null;
+    var property = getPropertyById(wp.propertyId);
+    if (!property) return null;
+
+    // Ensure calculated
+    calculateWorkpaper(workpaperId);
+    wp = getWorkpaperById(workpaperId);
+
+    var diags = runDiagnostics(workpaperId);
+
+    return {
+        propertyId: property.propertyId,
+        taxYear: wp.taxYear,
+        propertyType: property.taxClassification || 'Residential',
+        ownershipPercentage: property.ownershipPercentage,
+        grossIncome: wp.grossRentalIncome || 0,
+        otherIncome: wp.otherIncome || 0,
+        totalIncome: wp.totalIncome || 0,
+        totalExpensesBeforeAdjustments: wp.deductibleExpenseBase || 0,
+        capitalExcludedTotal: wp.capitalExcludedTotal || 0,
+        interestIncurred: wp.interestTotal || 0,
+        interestClaimed: wp.deductibleInterest || 0,
+        deductibleExpenses: wp.adjustedDeductibleExpenses || 0,
+        netIncome: wp.netRentalIncome || 0,
+        lossCarryForward: wp.lossCarryForward || 0,
+        diagnostics: diags.map(function (d) {
+            return { level: d.level, message: d.message };
+        })
+    };
+}
+
+// Implements REQ-016: Generate summaries for all active properties in a tax year
+function generateAllRentalSummaries(taxYear) {
+    var settings = loadSettings();
+    var year = taxYear || settings.taxYear;
+    var properties = loadProperties().filter(function (p) { return p.isActive; });
+    var summaries = [];
+
+    properties.forEach(function (prop) {
+        var wp = getWorkpaperByPropertyId(prop.propertyId);
+        if (wp && wp.taxYear === year) {
+            var summary = generateRentalSummary(wp.workpaperId);
+            if (summary) summaries.push(summary);
+        }
+    });
+
+    return summaries;
+}
+
+/* ================================================
+   Milestone 4: Tax Return & Compliance Mapping
+   ================================================ */
+
+// Implements REQ-017: Tax Return status lifecycle
+var TAX_RETURN_STATUS_ORDER = Object.freeze(['Draft', 'ReadyToReview', 'Complete', 'Locked']);
+
+/* ------------------------------------------------
+   Tax Return CRUD (REQ-017)
+   ------------------------------------------------ */
+
+// Implements REQ-017: Load tax returns from localStorage
+function loadTaxReturns() {
+    return _load(STORAGE_KEYS.taxreturns);
+}
+
+// Implements REQ-017: Save tax returns to localStorage
+function saveTaxReturns(taxReturns) {
+    _save(STORAGE_KEYS.taxreturns, taxReturns);
+}
+
+// Implements REQ-017: Get tax return by ID
+function getTaxReturnById(id) {
+    var returns = loadTaxReturns();
+    return returns.find(function (r) { return r.taxReturnId === id; }) || null;
+}
+
+// Implements REQ-017: Create a new tax return
+function createTaxReturn(data) {
+    var returns = loadTaxReturns();
+    var settings = loadSettings();
+    var taxReturn = {
+        taxReturnId: crypto.randomUUID(),
+        taxpayerId: DEFAULT_USER.userId,
+        taxYear: data.taxYear || settings.taxYear,
+        jurisdiction: data.jurisdiction || 'NZ-IRD',
+        status: 'Draft',
+        sections: data.sections || {},
+        validation: data.validation || { blocking: [], warnings: [] },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    };
+    returns.push(taxReturn);
+    saveTaxReturns(returns);
+    return taxReturn;
+}
+
+// Implements REQ-017: Update an existing tax return
+function updateTaxReturn(id, data) {
+    var returns = loadTaxReturns();
+    var idx = returns.findIndex(function (r) { return r.taxReturnId === id; });
+    if (idx === -1) return null;
+    Object.assign(returns[idx], data);
+    returns[idx].updatedAt = new Date().toISOString();
+    saveTaxReturns(returns);
+    return returns[idx];
+}
+
+// Implements REQ-017: Enforce status lifecycle Draft → ReadyToReview → Complete → Locked
+function transitionTaxReturnStatus(taxReturnId, newStatus) {
+    var taxReturn = getTaxReturnById(taxReturnId);
+    if (!taxReturn) return null;
+
+    var currentIdx = TAX_RETURN_STATUS_ORDER.indexOf(taxReturn.status);
+    var newIdx = TAX_RETURN_STATUS_ORDER.indexOf(newStatus);
+
+    if (newIdx === -1) return null;
+
+    // Allow forward transitions and back to Draft from ReadyToReview
+    if (newIdx <= currentIdx && !(newStatus === 'Draft' && taxReturn.status === 'ReadyToReview')) {
+        return null;
+    }
+
+    updateTaxReturn(taxReturnId, { status: newStatus });
+    return getTaxReturnById(taxReturnId);
+}
+
+/* ------------------------------------------------
+   Jurisdiction Mapping Service (REQ-018)
+   ------------------------------------------------ */
+
+// Implements REQ-018: Anti-Corruption Layer
+function mapToJurisdiction(jurisdiction, taxYear, rentalSummaries, inputs) {
+    if (jurisdiction === 'NZ-IRD') {
+        return mapToNzIrd(taxYear, rentalSummaries, inputs);
+    }
+    return { error: 'Unsupported jurisdiction: ' + jurisdiction };
+}
+
+/* ------------------------------------------------
+   NZ IR3 Mapping (REQ-019, REQ-020, REQ-021)
+   ------------------------------------------------ */
+
+// Implements REQ-019: IR3 Q22/Q23/Q24 field mapping
+// Implements REQ-020: IR3R per-property schedule
+// Implements REQ-021: Portfolio aggregation by residential/non-residential
+function mapToNzIrd(taxYear, rentalSummaries, inputs) {
+    inputs = inputs || {};
+
+    // REQ-021: Filter summaries by tax classification
+    var residential = rentalSummaries.filter(function (s) {
+        return s.propertyType === 'Residential' || s.propertyType === 'MixedUse';
+    });
+    var nonResidential = rentalSummaries.filter(function (s) {
+        return s.propertyType === 'Commercial';
+    });
+
+    // REQ-019: IR3 Q22 — Residential rental aggregation
+    var q22A = residential.reduce(function (sum, s) { return sum + (s.totalIncome || 0); }, 0);
+    var q22C = residential.reduce(function (sum, s) { return sum + (s.otherIncome || 0); }, 0);
+    var q22D = residential.reduce(function (sum, s) { return sum + (s.totalIncome || 0); }, 0);
+    var q22E = residential.reduce(function (sum, s) { return sum + (s.deductibleExpenses || 0); }, 0);
+    var q22F = inputs.priorYearResidentialLossUsed || 0;
+    var q22G = q22E + q22F;
+    var q22H = q22D - q22G;
+    var q22I = q22H < 0 ? Math.abs(q22H) : 0;
+
+    // REQ-019: IR3 Q23 — Interest disclosure
+    var q23A = residential.reduce(function (sum, s) { return sum + (s.interestIncurred || 0); }, 0);
+    var q23B = residential.reduce(function (sum, s) { return sum + (s.interestClaimed || 0); }, 0);
+    var q23C = inputs.interestReasonSelection || '';
+
+    // REQ-019: IR3 Q24 — Non-residential rental
+    var q24 = nonResidential.reduce(function (sum, s) { return sum + (s.netIncome || 0); }, 0);
+
+    // REQ-020: IR3R per-property schedule
+    var schedule = rentalSummaries.map(function (summary) {
+        return {
+            propertyId: summary.propertyId,
+            fields: {
+                'IR3R.B1': summary.grossIncome,
+                'IR3R.B2': summary.otherIncome,
+                'IR3R.B4': summary.totalIncome,
+                'IR3R.B7A': summary.interestIncurred,
+                'IR3R.B7B': summary.interestClaimed,
+                'IR3R.B7C': inputs.interestReasonSelection || '',
+                'IR3R.B14': summary.deductibleExpenses,
+                'IR3R.B15': summary.netIncome
+            }
+        };
+    });
+
+    return {
+        fields: {
+            'IR3.Q22.A': q22A,
+            'IR3.Q22.C': q22C,
+            'IR3.Q22.D': q22D,
+            'IR3.Q22.E': q22E,
+            'IR3.Q22.F': q22F,
+            'IR3.Q22.G': q22G,
+            'IR3.Q22.H': q22H,
+            'IR3.Q22.I': q22I,
+            'IR3.Q23.A': q23A,
+            'IR3.Q23.B': q23B,
+            'IR3.Q23.C': q23C,
+            'IR3.Q24': q24
+        },
+        schedule: schedule,
+        validation: { blocking: [], warnings: [] }
+    };
+}
+
+/* ================================================
+   Milestone 5: Export & Validation
+   ================================================ */
+
+// Implements REQ-023: Compliance Validation
+function validateTaxReturnCompliance(taxReturn) {
+    var blocking = [];
+    var warnings = [];
+
+    if (!taxReturn.sections || !taxReturn.sections.rental) {
+        blocking.push('Rental section is missing from tax return.');
+        return { blocking: blocking, warnings: warnings };
+    }
+
+    var rental = taxReturn.sections.rental;
+    var fields = rental.fields || {};
+    var schedule = rental.schedule || [];
+
+    // Check required fields present
+    var requiredFields = ['IR3.Q22.A', 'IR3.Q22.D', 'IR3.Q22.E', 'IR3.Q22.G', 'IR3.Q22.H', 'IR3.Q22.I'];
+    requiredFields.forEach(function (key) {
+        if (fields[key] === undefined || fields[key] === null) {
+            blocking.push('Required field ' + key + ' is missing.');
+        }
+    });
+
+    // Consistency: check interest totals match schedule
+    var scheduleInterestIncurred = 0;
+    var scheduleInterestClaimed = 0;
+    schedule.forEach(function (s) {
+        scheduleInterestIncurred += (s.fields['IR3R.B7A'] || 0);
+        scheduleInterestClaimed += (s.fields['IR3R.B7B'] || 0);
+    });
+
+    if (Math.abs((fields['IR3.Q23.A'] || 0) - scheduleInterestIncurred) > 0.01) {
+        warnings.push('IR3.Q23.A does not match sum of IR3R.B7A across schedule.');
+    }
+    if (Math.abs((fields['IR3.Q23.B'] || 0) - scheduleInterestClaimed) > 0.01) {
+        warnings.push('IR3.Q23.B does not match sum of IR3R.B7B across schedule.');
+    }
+
+    // Check for zero income with expenses
+    if ((fields['IR3.Q22.D'] || 0) === 0 && (fields['IR3.Q22.E'] || 0) > 0) {
+        warnings.push('Deductions claimed with zero residential income.');
+    }
+
+    return { blocking: blocking, warnings: warnings };
+}
+
+/* ================================================
+   Milestone 6: Client-Side API Functions
+   ================================================ */
+
+// Implements REQ-024
+function getRentalSummaries(taxYear) {
+    return generateAllRentalSummaries(taxYear);
+}
+
+// Implements REQ-025
+function generateTaxReturnApi(request) {
+    var taxYear = request.taxYear;
+    var jurisdiction = request.jurisdiction;
+    var inputs = (request.inputs && request.inputs.rental) || {};
+
+    // Generate summaries
+    var summaries = generateAllRentalSummaries(taxYear);
+
+    // Map to jurisdiction
+    var rentalSection = mapToJurisdiction(jurisdiction, taxYear, summaries, inputs);
+    if (rentalSection.error) {
+        return { error: rentalSection.error };
+    }
+
+    // Run compliance validation
+    var tempReturn = { sections: { rental: rentalSection } };
+    var validation = validateTaxReturnCompliance(tempReturn);
+
+    // Create TaxReturn
+    var taxReturn = createTaxReturn({
+        taxYear: taxYear,
+        jurisdiction: jurisdiction,
+        sections: { rental: rentalSection },
+        validation: validation
+    });
+
+    return {
+        taxReturnId: taxReturn.taxReturnId,
+        status: taxReturn.status,
+        jurisdiction: taxReturn.jurisdiction,
+        sections: taxReturn.sections,
+        validation: validation
+    };
+}
+
+// Implements REQ-026
+function validateTaxReturnApi(taxReturnId) {
+    var taxReturn = getTaxReturnById(taxReturnId);
+    if (!taxReturn) return { error: 'Tax return not found' };
+
+    var validation = validateTaxReturnCompliance(taxReturn);
+
+    // Update stored validation
+    updateTaxReturn(taxReturnId, { validation: validation });
+
+    return validation;
+}
+
+// Implements REQ-027
+function lockTaxReturnApi(taxReturnId) {
+    var taxReturn = getTaxReturnById(taxReturnId);
+    if (!taxReturn) return { error: 'Tax return not found' };
+
+    if (taxReturn.status !== 'Complete') {
+        return { error: 'Tax return must be in Complete status to lock. Current: ' + taxReturn.status };
+    }
+
+    // Run validation first
+    var validation = validateTaxReturnCompliance(taxReturn);
+    if (validation.blocking.length > 0) {
+        return { error: 'Cannot lock: blocking validation issues exist', validation: validation };
+    }
+
+    transitionTaxReturnStatus(taxReturnId, 'Locked');
+    return { success: true, status: 'Locked' };
 }
