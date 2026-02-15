@@ -1,6 +1,7 @@
 ---
 description: "Orchestration agent that coordinates specialist sub-agents to deliver work that is traceable to /specs."
 name: "Product Owner"
+model: Claude Sonnet 4.5 (copilot)
 tools: [read, agent, search, todo]
 ---
 
