@@ -16,15 +16,11 @@ Artifacts do not mature just because they exist in a backlog. Work only proceeds
 
 ## 1. The Paradigm Shift: From Verbs to Nouns
 
-Traditional SDLC models focus on **activities** (what people are doing: Designing, Developing, Testing).  
+This SDLC framework is organized around **artifacts (nouns)** rather than activities (verbs). Progress is evidenced by the **existence and maturity** of artifacts meeting their Definition of Done (DoD), while still remaining anchored to outcome and business objectives.
 
-This framework shifts the focus to **Artifacts** (what is being produced).
+The full articulation of this shift (including the contrast with a traditional verb-centric SDLC, the definition of the new SDLC as a system—not a tool—and the benefits across business/roles/customers) is in:
 
-**The Problem**  
-Activity-based progress is subjective. Statements like “I am 80% done coding” provide no tangible evidence of value.
-
-**The Solution**  
-Progress is measured by the **maturity** and **sum of delivered artifacts**. Work is only considered “Done” when the required set of artifacts meets their specific Definition of Done (DoD).
+- [docs/artefact-agentic-sdlc/01-the-paradigm-shift.md](docs/artefact-agentic-sdlc/01-the-paradigm-shift.md)
 
 ## 2. Human-Centered Accountability (The Decision Authority)
 
